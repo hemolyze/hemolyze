@@ -1,0 +1,6 @@
+Packages:
+- shadcn
+- tailwindcss
+- react icons
+- nextjs seo
+
