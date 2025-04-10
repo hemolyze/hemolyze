@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/ui/navbar";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -19,21 +20,21 @@ export default function Home() {
                 AI-powered platform.
               </p>
               <div className="mt-8 flex flex-col items-center sm:flex-row sm:justify-center lg:justify-start gap-4">
-                <a href="" target="_blank">
+                <Link href="" target="_blank">
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="text-lg bg-red-500 hover:border-red-600 text-white"
+                    variant="default"
+                    className="text-lg text-white bg-red-500 hover:bg-red-600 "
                   >
                     Upload Report
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </a>
+                </Link>
                 <a href="" target="_blank">
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="text-lg border-blue-300 hover:border-blue-300"
+                    variant="ghost"
+                    className="text-lg text-black bg-white hover:bg-black hover:text-white"
                   >
                     View Samples
                     <ArrowRight className="ml-2 h-5 w-5" />
