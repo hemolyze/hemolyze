@@ -3,12 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import {
   ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
 } from '@clerk/nextjs'
+import { Header } from '@/shared/components/layout/Header';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -29,17 +25,9 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${inter.variable} font-sans antialiased`}
+          className={`${inter.variable} font-sans antialiased bg-gradient-to-br from-gray-50 to-gray-100`}
         >
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
+          <Header />
           {children}
         </body>
       </html>

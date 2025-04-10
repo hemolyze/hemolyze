@@ -32,6 +32,11 @@ shared/ # Reusable components, hooks, types, constants etc.
   # Example: components/ui/ (UI primitives like Button, Input)
   # Example: hooks/ (generic React hooks)
   # Example: lib/ or utils/ (generic helper functions)
+  components/
+    layout/
+      Header.tsx # Common site header component with logo, navigation, and auth controls
+    ui/
+      button.tsx # Standard button component
 
 # Feature-specific modules
 features/ # Contains self-contained feature modules

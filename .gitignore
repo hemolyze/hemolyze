@@ -44,3 +44,6 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+.cursor/rules/cursorrules.mdc
+.cursor/rules/project-architecture.mdc
+.cursor/rules/project-details.mdc
