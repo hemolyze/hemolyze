@@ -24,7 +24,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${inter.variable} font-sans antialiased bg-background`}
+          className={`${inter.variable} font-sans antialiased bg-background overflow-hidden fixed top-0 bottom-0 left-0 right-0`}
         >
           {children}
         </body>
