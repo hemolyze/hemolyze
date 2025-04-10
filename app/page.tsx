@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       <Header />
-      <main className="flex min-h-[calc(100vh-theme(spacing.14))] flex-col items-center justify-center px-4 md:px-8 lg:px-12 bg-gradient-to-br from-gray-50 to-gray-100">
+      <main className="flex min-h-[calc(100vh-theme(spacing.14))] flex-col items-center justify-center px-4 md:px-8 lg:px-12 bg-background">
         <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left Column */}
           <div className="flex flex-col gap-6 items-start">
