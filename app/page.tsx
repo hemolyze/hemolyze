@@ -1,4 +1,5 @@
 import { Button } from "@/shared/components/ui/button"; // Assuming Button component exists
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -13,12 +14,16 @@ export default function Home() {
             Transform complex medical reports into clear, visual insights
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
-              Upload Report
-            </Button>
-            <Button size="lg" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
-              View Sample
-            </Button>
+            <Link href="/new">
+              <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
+                Upload Report
+              </Button>
+            </Link>
+            <Link href="/sample">
+              <Button size="lg" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                View Sample
+              </Button>
+            </Link>
           </div>
           <p className="text-xs text-gray-500 mt-2">
             End-to-end encrypted
@@ -29,8 +34,8 @@ export default function Home() {
         <div className="relative flex items-center justify-center aspect-square md:aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
           {/* Placeholder for the phone mock-up image */}
           <div className="text-center p-8">
-              <p className="text-gray-400 text-sm">Phone Mockup Image Area</p>
-              <p className="mt-4 text-xs text-gray-500">Image showing hemoglobin gauge goes here.</p>
+            <p className="text-gray-400 text-sm">Phone Mockup Image Area</p>
+            <p className="mt-4 text-xs text-gray-500">Image showing hemoglobin gauge goes here.</p>
           </div>
           {/* You would replace this div with an <Image> component */}
           {/* Example:
@@ -41,7 +46,7 @@ export default function Home() {
             objectFit="contain" // or cover depending on the image
           />
           */}
-           {/* Optional: Add the overlay text elements if needed directly here or absolutely positioned */}
+          {/* Optional: Add the overlay text elements if needed directly here or absolutely positioned */}
 
         </div>
       </div>

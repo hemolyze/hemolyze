@@ -13,9 +13,13 @@ README.md # Project overview and instructions
 
 # Application source code
 app/ # Main application directory following Next.js App Router structure
-  layout.tsx # Root layout component, includes Clerk authentication setup
+  layout.tsx # Root layout for the application
+  page.tsx # Landing/Home page
+  new/
+    page.tsx # Page for uploading a new report
+  sample/
+    page.tsx # Page displaying a sample report visualization
   globals.css # Global CSS styles
-  page.tsx # Root page component
 
 # Public assets
 public/ # Static assets served directly
