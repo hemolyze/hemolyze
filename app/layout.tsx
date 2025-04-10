@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Blood Work Decoder | Understand Your Lab Results Effortlessly',
+  title: 'Hemolyze | Understand Your Lab Results Effortlessly',
   description: 'Transform complex blood work reports into easy-to-understand insights with our AI-powered platform. Get personalized health recommendations based on your lab results.',
   keywords: ['blood work analysis', 'lab results decoder', 'health analytics', 'medical report interpretation', 'AI health insights'],
   authors: [{ name: 'Hemolyze' }],
