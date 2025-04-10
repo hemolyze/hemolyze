@@ -1,0 +1,44 @@
+# Root directory layout and configuration
+next.config.mjs # Next.js configuration file
+package.json # Project dependencies and scripts
+tsconfig.json # TypeScript configuration
+postcss.config.mjs # PostCSS configuration (often for TailwindCSS)
+tailwind.config.ts # Tailwind CSS configuration
+README.md # Project overview and instructions
+.gitignore # Specifies intentionally untracked files that Git should ignore
+.eslintrc.json # ESLint configuration for code linting
+.cursor-architecture # Defines the project's architectural rules and guidelines
+.cursor-directory # This file: describes the directory structure
+.cursorrules # Custom instructions for the AI assistant
+
+# Application source code
+app/ # Main application directory following Next.js App Router structure
+  layout.tsx # Root layout component, includes Clerk authentication setup
+  globals.css # Global CSS styles
+  page.tsx # Root page component
+
+# Public assets
+public/ # Static assets served directly
+  next.svg # Next.js logo
+  vercel.svg # Vercel logo
+
+# Library code (low-level, foundational)
+lib/ # Contains utility functions, external service integrations etc.
+  # Example: db.ts (database connection logic - if exists)
+  # Example: models/ (database schemas - if exists)
+
+# Shared code (reusable across features/entities, no business logic)
+shared/ # Reusable components, hooks, types, constants etc.
+  # Example: components/ui/ (UI primitives like Button, Input)
+  # Example: hooks/ (generic React hooks)
+  # Example: lib/ or utils/ (generic helper functions)
+
+# Feature-specific modules
+features/ # Contains self-contained feature modules
+  # Example: auth/ (authentication feature)
+  # Example: product-search/
+
+# Core business entity modules
+entities/ # Represents core business entities
+  # Example: user/
+  # Example: product/

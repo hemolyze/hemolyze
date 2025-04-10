@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 .cursorrules
 .cursor-architecture
+
+# clerk configuration (can include secrets)
+/.clerk/
