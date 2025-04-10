@@ -11,7 +11,7 @@ export const Navbar = () => {
                             <div className="flex items-center py-4 px-2">
                                 <Link href="/" className="font-bold text-gray-800 text-2xl">
                                     <span className="text-gray-800 text-xl">
-                                        Healthify
+                                        Hemolyze
                                     </span>
                                 </Link>
                             </div>
