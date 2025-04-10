@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main>
       <Navbar />
-      <section className="py-40 md:ml-20">
+      <section className="py-30 md:ml-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
@@ -23,7 +23,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="text-lg border-blue-300 hover:border-blue-300"
+                    className="text-lg bg-red-500 hover:border-red-600 text-white"
                   >
                     Upload Report
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -44,7 +44,7 @@ export default function Home() {
             <div className="mt-12 lg:mt-0 lg:col-span-6 flex items-center justify-center">
               <div className="w-full max-w-md">
                 <img
-                  src="https://placehold.co/600x400/ff7f7f/ffffff?text=Health+Data"
+                  src="https://placehold.co/600x500/ff7f7f/ffffff?text=Health+Data"
                   alt="Health Data Visualization"
                   className="rounded-lg shadow-xl"
                 />
