@@ -4,7 +4,6 @@ import "./globals.css";
 import {
   ClerkProvider,
 } from '@clerk/nextjs'
-import { Header } from '@/shared/components/layout/Header';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,7 +26,6 @@ export default function RootLayout({
         <body
           className={`${inter.variable} font-sans antialiased bg-gradient-to-br from-gray-50 to-gray-100`}
         >
-          <Header />
           {children}
         </body>
       </html>
