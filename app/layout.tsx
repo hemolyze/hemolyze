@@ -1,13 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import {
   ClerkProvider,
 } from '@clerk/nextjs'
 
-const inter = Inter({
-  variable: "--font-inter",
+/* const noto = Noto_Sans_Display({
+  variable: "--font-noto",
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
+}); */
+
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +31,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${inter.variable} font-sans antialiased bg-background overflow-hidden fixed top-0 bottom-0 left-0 right-0`}
+          className={`${roboto.variable} font-sans antialiased bg-background`}
         >
           {children}
         </body>
