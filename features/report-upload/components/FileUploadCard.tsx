@@ -73,6 +73,7 @@ export function FileUploadCard() {
 
             // Optional Redirect after successful save
             if (reportId) {
+                router.prefetch(`/reports/${reportId}`);
                 router.push(`/reports/${reportId}`); // Use the actual report ID
             }
 
