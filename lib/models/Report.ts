@@ -15,6 +15,7 @@ type OverallStatus = "pending" | "processing" | "partial" | "completed" | "faile
 
 // Interface defining the structure of a Report document
 interface IReport {
+  _id: string;
   userId: string; // Reference to the Clerk User ID
   title?: string;
   files: IReportFile[]; // Array containing details of all associated files
