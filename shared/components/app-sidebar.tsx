@@ -1,12 +1,6 @@
-"use client"
-
 import * as React from "react"
 import Link from "next/link";
 import {
-  IconHelp,
-  IconReport,
-  IconSearch,
-  IconSettings,
   IconPlus,
 } from "@tabler/icons-react"
 
@@ -35,38 +29,18 @@ const Logo = () => (
 );
 
 const data = {
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
   documents: [
     {
       name: "Blood Test - Jan 2024",
       url: "/reports/blood-test-jan-2024",
-      icon: IconReport,
     },
     {
       name: "Cholesterol - Feb 2024",
       url: "/reports/cholesterol-feb-2024",
-      icon: IconReport,
     },
     {
       name: "CBC Panel - Mar 2024",
       url: "/reports/cbc-panel-mar-2024",
-      icon: IconReport,
     },
   ],
 }
@@ -102,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </Link>
           }
         />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavSecondary className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

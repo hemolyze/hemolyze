@@ -6,7 +6,9 @@ import {
   IconFolder,
   IconShare3,
   IconTrash,
-  type Icon,
+} from "@tabler/icons-react"
+import {
+  IconReport,
 } from "@tabler/icons-react"
 
 import {
@@ -35,7 +37,6 @@ export function NavDocuments({
   items: {
     name: string
     url: string
-    icon: Icon
   }[]
   title: string
   action?: React.ReactNode
@@ -53,7 +54,7 @@ export function NavDocuments({
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <Link href={item.url} prefetch={true}>
-                <item.icon />
+                <IconReport />
                 <span>{item.name}</span>
               </Link>
             </SidebarMenuButton>
