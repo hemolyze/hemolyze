@@ -51,3 +51,11 @@ features/ # Contains self-contained feature modules
 entities/ # Represents core business entities
   # Example: user/
   # Example: product/
+
+# Added features directory
+features/report-upload # Contains self-contained modules for specific business features (e.g., auth, report-upload)
+  # Example: components/ (UI components specific to the report upload feature)
+
+# Added report-upload feature directory
+features/report-upload/components # UI components specific to the report upload feature
+  FileUploadCard.tsx # Client component handling file selection, drag-and-drop, and upload progress display
