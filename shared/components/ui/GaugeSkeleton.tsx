@@ -2,7 +2,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function GaugeSkeleton() {
     return (
-        <div className="flex flex-col items-center justify-center p-4 border rounded-lg shadow-sm bg-card text-card-foreground w-full h-64 gap-4">
+        <div className="flex flex-col items-center justify-center p-4 border rounded-lg shadow-sm bg-card text-card-foreground w-96 h-96 gap-4">
             {/* Title Skeleton */}
             <Skeleton className="h-6 w-3/4 rounded-md" />
             {/* Gauge Arc Skeleton */}
