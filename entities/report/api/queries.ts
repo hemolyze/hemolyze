@@ -10,7 +10,7 @@ interface SidebarReportItem {
 
 /**
  * Fetches reports for the current authenticated user, formatted for sidebar display.
- * Selects only the necessary fields (_id, files.fileName) for performance.
+ * Selects only the necessary fields (_id, title) for performance.
  * Returns an empty array if the user is not authenticated or an error occurs.
  */
 export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
@@ -26,15 +26,14 @@ export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
         // console.log("getReportsForSidebar (in entities): Connected to DB.");
 
         const reports = await Report.find({ userId })
-            .select('_id files.fileName')
+            .select('_id title')
             .sort({ createdAt: -1 }) // Show newest reports first
-            .lean<Pick<IReport & { _id: mongoose.Types.ObjectId }, '_id' | 'files'>[]>();
+            .lean<Pick<IReport & { _id: mongoose.Types.ObjectId }, '_id' | 'title'>[]>();
 
         // console.log(`getReportsForSidebar (in entities): Found ${reports.length} reports for user ${userId}.`);
 
         const formattedReports: SidebarReportItem[] = reports.map((report) => {
-            const reportName = report.files?.[0]?.fileName ?? `Report ${report._id.toString()}`;
-            const displayName = reportName.replace(/\.[^/.]+$/, "");
+            const displayName = report.title || `Report ${report._id.toString()}`;
             return {
                 name: displayName,
                 url: `/reports/${report._id.toString()}`,
