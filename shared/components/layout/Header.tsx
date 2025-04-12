@@ -26,7 +26,7 @@ const Logo = () => (
 export function Header() {
     return (
         <header className="sticky top-0 z-50 w-full border-border/40 backdrop-blur supports-[backdrop-filter]:bg-transparent">
-            <div className="w-full max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-0">
                 <Logo />
                 <nav className="flex items-center space-x-4 md:space-x-6">
                     <Link href="/features" className="text-sm font-medium text-gray-600 hover:text-gray-900">

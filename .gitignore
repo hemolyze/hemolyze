@@ -47,3 +47,5 @@ next-env.d.ts
 .cursor/rules/cursorrules.mdc
 .cursor/rules/project-architecture.mdc
 .cursor/rules/project-details.mdc
+
+bun.lock
