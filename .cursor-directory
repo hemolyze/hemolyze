@@ -28,8 +28,9 @@ public/ # Static assets served directly
 
 # Library code (low-level, foundational)
 lib/ # Contains utility functions, external service integrations etc.
-  # Example: db.ts (database connection logic - if exists)
-  # Example: models/ (database schemas - if exists)
+  db.ts # MongoDB connection utility (connect, disconnect, isConnected)
+  models/ # Database schemas (Mongoose Models)
+    Report.ts # Mongoose schema and model definition for medical reports
 
 # Shared code (reusable across features/entities, no business logic)
 shared/ # Reusable components, hooks, types, constants etc.
