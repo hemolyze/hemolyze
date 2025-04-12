@@ -6,11 +6,12 @@ import { connect, disconnect } from "@/lib/db";
 interface SidebarReportItem {
     name: string;
     url: string;
+    status: IReport['processingStatus'];
 }
 
 /**
  * Fetches reports for the current authenticated user, formatted for sidebar display.
- * Selects only the necessary fields (_id, title) for performance.
+ * Selects only the necessary fields (_id, title, processingStatus) for performance.
  * Returns an empty array if the user is not authenticated or an error occurs.
  */
 export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
@@ -26,9 +27,9 @@ export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
         // console.log("getReportsForSidebar (in entities): Connected to DB.");
 
         const reports = await Report.find({ userId })
-            .select('_id title')
+            .select('_id title processingStatus')
             .sort({ createdAt: -1 }) // Show newest reports first
-            .lean<Pick<IReport & { _id: mongoose.Types.ObjectId }, '_id' | 'title'>[]>();
+            .lean<Pick<IReport & { _id: mongoose.Types.ObjectId }, '_id' | 'title' | 'processingStatus'>[]>();
 
         // console.log(`getReportsForSidebar (in entities): Found ${reports.length} reports for user ${userId}.`);
 
@@ -37,6 +38,7 @@ export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
             return {
                 name: displayName,
                 url: `/reports/${report._id.toString()}`,
+                status: report.processingStatus
             };
         });
 

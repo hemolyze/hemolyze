@@ -31,6 +31,7 @@ import {
 interface SidebarReportItem {
   name: string;
   url: string;
+  status: string;
 }
 
 // Props specifically for this client component
@@ -57,7 +58,9 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
               <SidebarMenuButton asChild>
                 <Link href={item.url} prefetch={true}>
                   <FileText className="h-4 w-4" />
-                  <span className="truncate">{item.name}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="truncate">{item.name}</span>
+                  </span>
                 </Link>
               </SidebarMenuButton>
               <DropdownMenu>
