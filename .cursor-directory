@@ -48,6 +48,12 @@ shared/ # Reusable components, hooks, types, constants etc.
       Header.tsx # Common site header component with logo, navigation, and auth controls
     ui/
       button.tsx # Standard button component
+    app-sidebar.tsx: The main application sidebar component, displaying navigation and reports
+    nav-documents.tsx: Component specifically for displaying a list of document/report links
+    nav-secondary.tsx: Component for secondary navigation items
+    nav-user.tsx: Component displaying user information or actions in the sidebar footer
+    ui: Atomic UI kit components (e.g., Sidebar primitives)
+      sidebar.tsx: Primitives for building the sidebar structure
 
 # Feature-specific modules
 features/ # Contains self-contained feature modules
@@ -58,6 +64,9 @@ features/ # Contains self-contained feature modules
 entities/ # Represents core business entities
   # Example: user/
   # Example: product/
+  report: Represents the medical report entity
+    api: Holds API-related logic for reports (fetching, mutations)
+      queries.ts: Functions for querying report data (e.g., fetching reports for the sidebar)
 
 # Added features directory
 features/report-upload # Contains self-contained modules for specific business features (e.g., auth, report-upload)

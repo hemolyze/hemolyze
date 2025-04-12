@@ -17,6 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar"
+import { getReportsForSidebar } from "@/entities/report/api/queries"
 
 const Logo = () => (
   <div className="flex items-center gap-2">
@@ -28,24 +29,9 @@ const Logo = () => (
   </div>
 );
 
-const data = {
-  documents: [
-    {
-      name: "Blood Test - Jan 2024",
-      url: "/reports/blood-test-jan-2024",
-    },
-    {
-      name: "Cholesterol - Feb 2024",
-      url: "/reports/cholesterol-feb-2024",
-    },
-    {
-      name: "CBC Panel - Mar 2024",
-      url: "/reports/cbc-panel-mar-2024",
-    },
-  ],
-}
+export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const reports = await getReportsForSidebar();
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -65,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavDocuments
           title="Reports"
-          items={data.documents}
+          items={reports}
           action={
             <Link
               href="/new"
@@ -76,7 +62,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </Link>
           }
         />
-        <NavSecondary className="mt-auto" />
+        <NavSecondary className="mt-auto2" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

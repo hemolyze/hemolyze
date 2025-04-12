@@ -44,12 +44,12 @@ export function NavDocuments({
   const { isMobile } = useSidebar()
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center justify-between">
         <SidebarGroupLabel>{title}</SidebarGroupLabel>
         {action}
       </div>
-      <SidebarMenu>
+      <SidebarMenu className="flex flex-col gap-2 overflow-scroll flex-1">
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
