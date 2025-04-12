@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import mongoose from 'mongoose';
 import Report, { IReport } from "@/lib/models/Report";
-import { connect } from "@/lib/db";
+import { connect, disconnect } from "@/lib/db";
 
 interface SidebarReportItem {
     name: string;
@@ -17,41 +17,37 @@ export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
     const { userId } = await auth();
 
     if (!userId) {
-        console.log("getReportsForSidebar: No user ID found, returning empty array.");
+        // console.log("getReportsForSidebar (in entities): No user ID found, returning empty array.");
         return []; // Not authenticated
     }
 
     try {
         await connect();
-        console.log("getReportsForSidebar: Connected to DB.");
+        // console.log("getReportsForSidebar (in entities): Connected to DB.");
 
-        // Fetch reports, selecting only necessary fields and using lean
         const reports = await Report.find({ userId })
             .select('_id files.fileName')
             .sort({ createdAt: -1 }) // Show newest reports first
             .lean<Pick<IReport & { _id: mongoose.Types.ObjectId }, '_id' | 'files'>[]>();
 
-        console.log(`getReportsForSidebar: Found ${reports.length} reports for user ${userId}.`);
+        // console.log(`getReportsForSidebar (in entities): Found ${reports.length} reports for user ${userId}.`);
 
         const formattedReports: SidebarReportItem[] = reports.map((report) => {
-            // Derive name from the first file, fallback to ID
             const reportName = report.files?.[0]?.fileName ?? `Report ${report._id.toString()}`;
-            // Remove file extension for cleaner display
             const displayName = reportName.replace(/\.[^/.]+$/, "");
             return {
                 name: displayName,
-                url: `/reports/${report._id.toString()}`, // Link to the specific report page
+                url: `/reports/${report._id.toString()}`,
             };
         });
 
-        console.log("getReportsForSidebar: Successfully formatted reports.");
+        // console.log("getReportsForSidebar (in entities): Successfully formatted reports.");
         return formattedReports;
     } catch (error) {
-        console.error("Error fetching reports for sidebar:", error);
-        return []; // Return empty array on error to prevent breaking the UI
+        console.error("Error fetching reports for sidebar (in entities):", error);
+        return [];
     } finally {
-        // Ensure disconnection even if errors occur
-        // await disconnect();
-        console.log("getReportsForSidebar: Disconnected from DB.");
+        await disconnect();
+        // console.log("getReportsForSidebar (in entities): Disconnected from DB.");
     }
 } 

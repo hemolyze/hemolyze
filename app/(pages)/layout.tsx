@@ -1,4 +1,6 @@
+// import { Suspense } from "react"; // Remove unused Suspense import
 import { AppSidebar } from "@/shared/components/app-sidebar";
+// import { AppSidebarSkeleton } from "@/shared/components/app-sidebar-skeleton"; // Skeleton import already removed
 import { SiteHeader } from "@/shared/components/site-header";
 import {
     SidebarInset,

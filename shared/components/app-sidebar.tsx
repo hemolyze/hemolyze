@@ -1,10 +1,12 @@
 import * as React from "react"
+import { Suspense } from "react"
 import Link from "next/link";
 import {
   IconPlus,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/shared/components/nav-documents"
+import { NavDocumentsSkeleton } from "@/shared/components/nav-documents-skeleton"
 // import { NavMain } from "@/shared/components/nav-main"
 import { NavSecondary } from "@/shared/components/nav-secondary"
 import { NavUser } from "@/shared/components/nav-user"
@@ -17,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar"
-import { getReportsForSidebar } from "@/entities/report/api/queries"
+// import { getReportsForSidebar } from "@/entities/report/api/queries"
 
 const Logo = () => (
   <div className="flex items-center gap-2">
@@ -29,8 +31,8 @@ const Logo = () => (
   </div>
 );
 
-export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const reports = await getReportsForSidebar();
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // const reportsPromise = getReportsForSidebar();
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -49,20 +51,22 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavDocuments
-          title="Reports"
-          items={reports}
-          action={
-            <Link
-              href="/new"
-              className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
-              aria-label="Create new report"
-            >
-              <IconPlus size={16} />
-            </Link>
-          }
-        />
-        <NavSecondary className="mt-auto2" />
+        <Suspense fallback={<NavDocumentsSkeleton />}>
+          <NavDocuments
+            title="Reports"
+            // reportsPromise={reportsPromise}
+            action={
+              <Link
+                href="/new"
+                className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
+                aria-label="Create new report"
+              >
+                <IconPlus size={16} />
+              </Link>
+            }
+          />
+        </Suspense>
+        <NavSecondary className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

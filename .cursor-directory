@@ -48,8 +48,12 @@ shared/ # Reusable components, hooks, types, constants etc.
       Header.tsx # Common site header component with logo, navigation, and auth controls
     ui/
       button.tsx # Standard button component
-    app-sidebar.tsx: The main application sidebar component, displaying navigation and reports
-    nav-documents.tsx: Component specifically for displaying a list of document/report links
+      skeleton.tsx # Placeholder skeleton loader component
+      dropdown-menu.tsx # Primitives for dropdown menus
+    app-sidebar.tsx: The main application sidebar component, displays navigation, wraps NavDocuments in Suspense.
+    nav-documents.tsx: Async Server Component wrapper that fetches report data and renders NavDocumentsContent.
+    nav-documents-content.tsx: Client Component ('use client') responsible for rendering the report list UI and handling interactions (e.g., dropdown menu, hooks).
+    nav-documents-skeleton.tsx: Skeleton loader fallback for the NavDocuments component.
     nav-secondary.tsx: Component for secondary navigation items
     nav-user.tsx: Component displaying user information or actions in the sidebar footer
     ui: Atomic UI kit components (e.g., Sidebar primitives)
@@ -65,8 +69,8 @@ entities/ # Represents core business entities
   # Example: user/
   # Example: product/
   report: Represents the medical report entity
-    api: Holds API-related logic for reports (fetching, mutations)
-      queries.ts: Functions for querying report data (e.g., fetching reports for the sidebar)
+    api: Holds API-related logic for reports (fetching, mutations).
+      queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
 
 # Added features directory
 features/report-upload # Contains self-contained modules for specific business features (e.g., auth, report-upload)
