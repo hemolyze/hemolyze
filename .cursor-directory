@@ -58,6 +58,8 @@ shared/ # Reusable components, hooks, types, constants etc.
     nav-user.tsx: Component displaying user information or actions in the sidebar footer
     ui: Atomic UI kit components (e.g., Sidebar primitives)
       sidebar.tsx: Primitives for building the sidebar structure
+    utils/
+      PrefetchNewPage.tsx # Client component to prefetch a route on mount, used for optimization.
 
 # Feature-specific modules
 features/ # Contains self-contained feature modules
