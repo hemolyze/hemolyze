@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone, FileRejection, DropzoneOptions, ErrorCode } from 'react-dropzone';
-// import axios, { AxiosProgressEvent } from 'axios'; // Keep commented until actual upload implemented
+import axios, { AxiosProgressEvent, AxiosError } from 'axios'; // Removed CancelTokenSource, added AxiosError
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Progress } from '@/shared/components/ui/progress';
@@ -13,7 +13,10 @@ import { UploadCloud, File as FileIcon, X } from 'lucide-react';
 interface UploadProgress {
   progress: number;
   status: 'pending' | 'uploading' | 'success' | 'error';
-  source?: AbortController; // To allow cancellation
+  source?: AbortController; // Using AbortController for cancellation
+  // cancelTokenSource?: CancelTokenSource; // Alternative: Axios cancel token
+  filePath?: string; // Store the S3 file path after getting signed URL
+  errorMessage?: string; // Store specific error message for a file
 }
 
 interface FileUploadProgress extends File {
@@ -24,80 +27,127 @@ interface FileUploadProgress extends File {
 const PDF_MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const IMAGE_MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-// Mock function to simulate getting a signed URL and uploading
-// In a real app, this would fetch the URL and then perform the PUT request
-const mockUploadFile = async (
-  file: File,
-  onProgress: (progress: number) => void
-): Promise<void> => {
-  return new Promise((resolve) => {
-    // Simulate network delay and progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      if (progress <= 100) {
-        onProgress(progress);
-      } else {
-        clearInterval(interval);
-        // Simulate success after a short delay
-        setTimeout(() => resolve(), 300);
-      }
-    }, 200); // Adjust interval for realistic simulation
-  });
-};
-
+// Remove mockUploadFile function
+// const mockUploadFile = async (...) => { ... };
 
 export function FileUploadCard() {
   const [files, setFiles] = useState<FileUploadProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false); // Add state to track overall upload status
 
   const updateFileProgress = useCallback((fileName: string, progressData: Partial<UploadProgress>) => {
     setFiles(currentFiles =>
       currentFiles.map(f =>
-        f.name === fileName ? { ...f, uploadProgress: { ...f.uploadProgress, ...progressData } } : f
+        f.name === fileName
+          ? { ...f, uploadProgress: { ...f.uploadProgress, ...progressData } }
+          : f
       )
     );
   }, []);
 
   const handleUpload = useCallback(async () => {
-    if (files.length === 0) return;
+    const filesToUpload = files.filter(f => f.uploadProgress.status === 'pending' || f.uploadProgress.status === 'error');
+    if (filesToUpload.length === 0) return;
 
-    setError(null); // Clear previous errors
+    setError(null);
+    setIsUploading(true);
 
-    files.forEach(async file => {
-      if (file.uploadProgress.status === 'pending' || file.uploadProgress.status === 'error') {
-        const abortController = new AbortController();
-        updateFileProgress(file.name, { status: 'uploading', source: abortController });
+    const uploadPromises = filesToUpload.map(async (file) => {
+      const abortController = new AbortController();
+      updateFileProgress(file.name, {
+        status: 'uploading',
+        source: abortController,
+        progress: 0,
+        errorMessage: undefined, // Clear previous errors
+      });
 
-        try {
-          // Replace mockUploadFile with actual signed URL fetching and axios upload
-          await mockUploadFile(file, (progress) => {
-            updateFileProgress(file.name, { progress });
-          });
+      try {
+        // 1. Get Signed URL from our API
+        const signedUrlResponse = await axios.post('/api/report-upload/signed-url', {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        });
 
-          // Actual upload logic would look something like this:
-          // const signedUrlResponse = await axios.post('/api/get-signed-url', { fileName: file.name, contentType: file.type });
-          // const signedUrl = signedUrlResponse.data.url;
-          // await axios.put(signedUrl, file, {
-          //   signal: abortController.signal,
-          //   headers: { 'Content-Type': file.type },
-          //   onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-          //     const percentCompleted = progressEvent.total
-          //       ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          //       : 0;
-          //     updateFileProgress(file.name, { progress: percentCompleted });
-          //   },
-          // });
+        const { url, filePath, method } = signedUrlResponse.data;
 
-          updateFileProgress(file.name, { status: 'success', progress: 100, source: undefined });
-        } catch (err) {
-          console.error('Upload failed for:', file.name, err);
-          updateFileProgress(file.name, { status: 'error', progress: 0, source: undefined });
-          // Optionally set a general error message
-          // setError(`Upload failed for ${file.name}. Please try again.`);
+        if (!url || !filePath || method !== 'PUT') {
+          throw new Error("Invalid signed URL response from server.");
         }
+
+        // Store the filePath
+        updateFileProgress(file.name, { filePath: filePath });
+
+        // 2. Upload file to S3 using the signed URL
+        await axios.put(url, file, {
+          signal: abortController.signal,
+          headers: {
+            'Content-Type': file.type,
+            // S3 often doesn't require Content-Length for PUT with signed URLs, but axios might add it.
+            // Ensure server generating the URL includes necessary headers if required by S3 policy.
+          },
+          onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+            const percentCompleted = progressEvent.total
+              ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              : 0; // Use 0 if total size is unknown
+            updateFileProgress(file.name, { progress: percentCompleted });
+          },
+        });
+
+        // 3. Update status to success
+        updateFileProgress(file.name, { status: 'success', progress: 100, source: undefined });
+        return { success: true, fileName: file.name, filePath }; // Indicate success and return details
+
+      } catch (err) {
+        console.error('Upload failed for:', file.name, err);
+        let errorMessage = "Upload failed.";
+
+        if (axios.isCancel(err)) {
+          errorMessage = "Upload cancelled.";
+        } else if (axios.isAxiosError(err)) {
+          const axiosError = err as AxiosError<{ error?: string }>;
+          if (axiosError.response) {
+             // Error from server (e.g., signed URL API or S3 itself)
+             errorMessage = axiosError.response.data?.error || `Server error (${axiosError.response.status})`;
+          } else if (axiosError.request) {
+             // Network error
+             errorMessage = "Network error during upload.";
+          }
+        } else if (err instanceof Error) {
+            errorMessage = err.message; // Error from client-side logic (e.g., invalid signed URL response)
+        }
+
+        updateFileProgress(file.name, {
+           status: 'error',
+           progress: 0,
+           source: undefined,
+           errorMessage: errorMessage
+        });
+        return { success: false, fileName: file.name, error: errorMessage }; // Indicate failure
       }
     });
+
+    // Wait for all uploads to complete (or fail)
+    const results = await Promise.all(uploadPromises);
+    setIsUploading(false);
+
+    // Optional: Handle results - e.g., show a summary message, trigger next step
+    const successfulUploads = results.filter(r => r.success);
+    const failedUploads = results.filter(r => !r.success);
+
+    if (successfulUploads.length > 0) {
+        console.log("Successfully uploaded:", successfulUploads.map(f => ({ name: f.fileName, path: f.filePath })));
+        // TODO: Trigger next step, e.g., save report details to DB
+    }
+
+    if (failedUploads.length > 0) {
+        setError(`${failedUploads.length} file(s) failed to upload. Check individual file status.`);
+    }
+    // If all successful and no failures, maybe clear the error message
+    else if (successfulUploads.length > 0) {
+        setError(null);
+    }
+
   }, [files, updateFileProgress]);
 
   const removeFile = useCallback((fileName: string) => {
@@ -193,8 +243,9 @@ export function FileUploadCard() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone(dropzoneOptions);
 
-  const filesToUpload = files.filter(f => f.uploadProgress.status === 'pending' || f.uploadProgress.status === 'error');
-  const isUploading = files.some(f => f.uploadProgress.status === 'uploading');
+  // Update derived state calculation to use the new isUploading state
+  // const filesToUpload = files.filter(f => f.uploadProgress.status === 'pending' || f.uploadProgress.status === 'error');
+  // const isUploading = files.some(f => f.uploadProgress.status === 'uploading'); // Remove this line, use state variable
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -248,32 +299,40 @@ export function FileUploadCard() {
                        {file.uploadProgress.status === 'error' && (
                          <span className="text-xs text-red-600 font-medium">Error</span>
                        )}
-                      {(file.uploadProgress.status === 'pending' || file.uploadProgress.status === 'error' || file.uploadProgress.status === 'success') && (
+                       {file.uploadProgress.status === 'error' && file.uploadProgress.errorMessage && (
+                         <span className="text-xs text-red-600 font-medium ml-1 truncate" title={file.uploadProgress.errorMessage}>
+                           ({file.uploadProgress.errorMessage})
+                         </span>
+                       )}
+                       {(file.uploadProgress.status === 'pending' || file.uploadProgress.status === 'error' || file.uploadProgress.status === 'success') && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="w-6 h-6"
                           onClick={() => removeFile(file.name)}
                           aria-label={`Remove ${file.name}`}
+                          disabled={isUploading} // Disable remove during active uploads for simplicity, or implement cancel+remove
                         >
                           <X className="w-4 h-4" />
                         </Button>
                       )}
-                       {/* Add cancel button for 'uploading' state if needed */}
-                       {/* {file.uploadProgress.status === 'uploading' && file.uploadProgress.source && (
-                          <Button variant="ghost" size="icon" onClick={() => file.uploadProgress.source?.abort()}>
-                              <X className="w-4 h-4" />
+                       {/* Cancel button for 'uploading' state */}
+                       {file.uploadProgress.status === 'uploading' && file.uploadProgress.source && (
+                          <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => file.uploadProgress.source?.abort()} aria-label={`Cancel upload for ${file.name}`}>
+                              <X className="w-4 h-4 text-red-500" />
                           </Button>
-                       )} */}
+                       )}
                     </div>
                   </li>
                 ))}
               </ul>
             </ScrollArea>
             <div className="flex justify-end space-x-3">
+              {/* Disable Clear All during upload */}
               <Button variant="outline" onClick={() => setFiles([])} disabled={isUploading}>Clear All</Button>
-              <Button onClick={handleUpload} disabled={filesToUpload.length === 0 || isUploading}>
-                {isUploading ? 'Uploading...' : `Upload ${filesToUpload.length} File${filesToUpload.length === 1 ? '' : 's'}`}
+              {/* Update Upload button state/text */}
+              <Button onClick={handleUpload} disabled={files.filter(f => f.uploadProgress.status === 'pending' || f.uploadProgress.status === 'error').length === 0 || isUploading}>
+                {isUploading ? 'Uploading...' : `Upload ${files.filter(f => f.uploadProgress.status === 'pending' || f.uploadProgress.status === 'error').length} File(s)`}
               </Button>
             </div>
           </div>
