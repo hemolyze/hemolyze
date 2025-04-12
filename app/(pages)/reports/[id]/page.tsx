@@ -2,6 +2,7 @@ import MetadataViewer from "@/entities/report/components/MetadataViewer";
 import TestViewer from "@/entities/report/components/TestViewer";
 import { Suspense } from "react";
 import MetadataViewerSkeleton from "@/entities/report/components/MetadataViewerSkeleton";
+import TestViewerSkeleton from '@/entities/report/components/TestViewerSkeleton';
 
 async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   // Await the params to get the id
@@ -11,7 +12,7 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
     <Suspense fallback={<MetadataViewerSkeleton />}>
       <MetadataViewer id={id} />
     </Suspense>
-    <Suspense fallback={<div>Loading Tests...</div>}>
+    <Suspense fallback={<TestViewerSkeleton />}>
       <TestViewer id={id} />
     </Suspense>
   </div>

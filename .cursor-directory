@@ -149,3 +149,9 @@ features/report-upload/components # UI components specific to the report upload 
 - Adhere to the import rules defined in `project-architecture.mdc`.
 - Place new components/features/entities in their designated directories.
 - Update this file when adding significant new files or directories.
+
+shared/components/ui/GaugeSkeleton.tsx:
+  # Represents the loading state for a single Gauge component.
+
+entities/report/components/TestViewerSkeleton.tsx:
+  # Displays a grid of GaugeSkeleton components as a loading placeholder for TestViewer.

@@ -17,7 +17,7 @@ export default async function TestViewer({ id }: { id: string }) {
     return <div className="flex flex-wrap gap-4 justify-center">
         {testData.gauge.map((gauge) => (
             <Gauge options={{
-                title: gauge.test + " " + gauge.unit,
+                title: gauge.test,
                 minValue: gauge.gaugeMin,
                 maxValue: gauge.gaugeMax,
                 lowThreshold: gauge.referenceRange?.min as number,
