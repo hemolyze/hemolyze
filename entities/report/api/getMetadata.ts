@@ -1,17 +1,23 @@
 import { connect } from "@/lib/db";
 import mongoose from "mongoose";
 import { notFound } from "next/navigation";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { generateObject, LanguageModel } from "ai";
 import { z } from "zod";
-import { anthropic } from "@ai-sdk/anthropic";
 import Report, {
-  IReportFile,
   IReport,
   OverallStatus,
   ProcessingPhaseStatus,
-} from "@/lib/models/Report"; // Ensure this path is correct
+} from "@/lib/models/Report";
+import { getAiModel } from "@/shared/lib/ai/anthropic"; // Import shared AI model getter
+// Import entity-specific lib functions
+import {
+  generateSignedUrlsForProcessing,
+  ReportFileWithUrl,
+} from "../lib/generateSignedUrls";
+import {
+  fetchFileContentsForProcessing,
+  FetchedFileData,
+} from "../lib/fetchFileContents";
 
 // Define the specific fields to return
 export type LimitedReportMetadata = Pick<
@@ -37,6 +43,7 @@ type AiContentPart =
   | { type: "text"; text: string }
   | { type: "file"; data: Buffer; mimeType: string };
 
+// Update the return type of the main function
 export async function getReportMetadata(
   id: string
 ): Promise<LimitedReportMetadata | null> {
@@ -78,111 +85,6 @@ export async function getReportMetadata(
 
   // If no processing was needed, return the initially fetched limited report
   return initialReport;
-}
-
-const S3_BUCKET_NAME = process.env.X_AWS_BUCKET_NAME;
-
-interface ReportFileWithUrl extends IReportFile {
-  signedUrl: string;
-}
-
-let s3ClientInstance: S3Client | null = null;
-let aiModelInstance: LanguageModel | null = null;
-
-function getS3Client(): S3Client {
-  if (!s3ClientInstance) {
-    if (
-      !process.env.X_AWS_REGION ||
-      !process.env.X_AWS_ACCESS_KEY_ID ||
-      !process.env.X_AWS_SECRET_ACCESS_KEY
-    ) {
-      throw new Error(
-        "Missing required AWS environment variables for S3 client."
-      );
-    }
-    s3ClientInstance = new S3Client({
-      region: process.env.X_AWS_REGION!,
-      credentials: {
-        accessKeyId: process.env.X_AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.X_AWS_SECRET_ACCESS_KEY!,
-      },
-    });
-  }
-  return s3ClientInstance;
-}
-
-async function generateSignedUrlsForProcessing(
-  files: IReportFile[]
-): Promise<ReportFileWithUrl[]> {
-  if (!S3_BUCKET_NAME) {
-    throw new Error("S3_BUCKET_NAME environment variable is not set.");
-  }
-  const s3 = getS3Client();
-  return Promise.all(
-    files.map(async (file) => {
-      const command = new GetObjectCommand({
-        Bucket: S3_BUCKET_NAME,
-        Key: file.filePath,
-      });
-      const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
-      return {
-        fileName: file.fileName,
-        filePath: file.filePath,
-        fileType: file.fileType,
-        fileSize: file.fileSize,
-        signedUrl: signedUrl,
-      };
-    })
-  );
-}
-
-interface FetchedFileData {
-  fileName: string;
-  fileType: string;
-  fileBuffer: Buffer;
-  error?: string;
-}
-
-function getAiModel(): LanguageModel {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("Missing ANTHROPIC_API_KEY environment variable.");
-  }
-  if (!aiModelInstance) {
-    // Initialize the specific model you want to use
-    aiModelInstance = anthropic("claude-3-5-sonnet-latest");
-  }
-  return aiModelInstance;
-}
-
-async function fetchFileContentsForProcessing(
-  filesWithUrls: ReportFileWithUrl[]
-): Promise<FetchedFileData[]> {
-  return Promise.all(
-    filesWithUrls.map(async (file) => {
-      try {
-        const response = await fetch(file.signedUrl);
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch ${file.fileName} from S3: ${response.statusText}`
-          );
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        return {
-          fileName: file.fileName,
-          fileType: file.fileType,
-          fileBuffer: Buffer.from(arrayBuffer),
-        };
-      } catch (err) {
-        console.error(`Error fetching file ${file.fileName}:`, err);
-        return {
-          fileName: file.fileName,
-          fileType: file.fileType,
-          fileBuffer: Buffer.alloc(0),
-          error: err instanceof Error ? err.message : "Unknown fetch error",
-        };
-      }
-    })
-  );
 }
 
 const medicalReportSchema = z
@@ -258,8 +160,9 @@ async function extractDataWithAI(
   let aiModel: LanguageModel;
 
   try {
-    aiModel = getAiModel(); // Get initialized model, checks API key
+    aiModel = getAiModel(); // Use imported function
   } catch (err) {
+    console.error("Error getting AI model:", err); // Log error
     return {
       processingError:
         err instanceof Error ? err.message : "AI model initialization failed.",
@@ -273,6 +176,7 @@ async function extractDataWithAI(
     },
   ];
 
+  // Filter out files that had errors during fetching or have no buffer
   const successfullyFetchedFiles = fetchedFiles.filter(
     (f) => !f.error && f.fileBuffer.length > 0
   );
@@ -287,11 +191,13 @@ async function extractDataWithAI(
     });
 
     try {
+      console.log("Calling generateObject with AI model..."); // Log before call
       const { object } = await generateObject({
         model: aiModel,
         schema: medicalReportSchema,
         messages: [{ role: "user", content: aiContent }],
       });
+      console.log("AI data extraction successful."); // Log success
       extractedObject = object;
     } catch (err) {
       console.error("Error calling generateObject:", err);
@@ -299,8 +205,10 @@ async function extractDataWithAI(
         err instanceof Error ? err.message : "AI processing error";
     }
   } else {
-    processingError = "No files could be successfully fetched or processed.";
-    console.error(processingError);
+    // This case is handled before calling this function in processReportMetadata
+    // But keep a log here just in case.
+    processingError = "No successfully fetched files provided to AI for processing.";
+    console.warn(processingError);
   }
 
   return { extractedObject, processingError };
@@ -318,9 +226,17 @@ const processReportMetadata = async (
 
   let filesWithUrls: ReportFileWithUrl[] = [];
   try {
+    // Use imported function
     filesWithUrls = await generateSignedUrlsForProcessing(fullReport.files);
+    // Check if any URL generation failed (indicated by empty string)
+    const failedUrlGenerations = filesWithUrls.filter(f => !f.signedUrl && f.filePath);
+    if(failedUrlGenerations.length > 0) {
+      console.warn(`Failed to generate signed URLs for some files: ${failedUrlGenerations.map(f => f.fileName).join(", ")}`);
+      // Decide if this is a critical failure or if we can proceed with partial files
+      // For now, let's proceed if at least one URL was generated
+    }
   } catch (error) {
-    console.error(`Error generating signed URLs for ${reportId}:`, error);
+    console.error(`Critical error generating signed URLs for ${reportId}:`, error);
     const updateData: Partial<IReport> = {
       metadataStatus: "failed",
       overallStatus: "failed",
@@ -335,60 +251,79 @@ const processReportMetadata = async (
     .lean<LimitedReportMetadata>();
   }
 
-  const fetchedFilesData = await fetchFileContentsForProcessing(filesWithUrls);
-  const filesWithError = fetchedFilesData.filter((f) => f.error);
-  if (filesWithError.length > 0) {
-    console.warn(
-      `Errors encountered fetching files for report ${reportId}:`,
-      filesWithError.map((f) => `${f.fileName}: ${f.error}`)
-    );
-    // Decide if partial processing is okay or if it's a hard failure
-    // For now, we proceed if at least one file was fetched
+  // Filter out files for which URL generation failed before fetching
+  const validFilesForFetching = filesWithUrls.filter(f => f.signedUrl);
+  if (validFilesForFetching.length === 0 && fullReport.files.length > 0) {
+      console.error(`No valid signed URLs generated for any files in report ${reportId}.`);
+      const updateData: Partial<IReport> = {
+        metadataStatus: "failed",
+        overallStatus: "failed",
+        metadataError: "Failed to generate any valid signed URLs.",
+      };
+      return await Report.findByIdAndUpdate(reportId, updateData, { new: true })
+        .select(selectionString)
+        .lean<LimitedReportMetadata>();
+  } else if (fullReport.files.length === 0) {
+       console.warn(`Report ${reportId} has no files associated. Marking metadata as failed.`);
+       const updateData: Partial<IReport> = {
+        metadataStatus: "failed",
+        overallStatus: "failed", // Or potentially "completed" if no files means nothing to process?
+        metadataError: "Report has no associated files.",
+       };
+       return await Report.findByIdAndUpdate(reportId, updateData, { new: true })
+         .select(selectionString)
+         .lean<LimitedReportMetadata>();
   }
+
+  // Use imported function
+  const fetchedFilesData = await fetchFileContentsForProcessing(validFilesForFetching);
 
   const successfullyFetchedFiles = fetchedFilesData.filter(
     (f) => !f.error && f.fileBuffer.length > 0
   );
+
+  // Handle case where fetching failed for all files that had valid URLs
   if (successfullyFetchedFiles.length === 0) {
-    console.error(`No files could be fetched for report ${reportId}.`);
-    const updateData: Partial<IReport> = {
-      metadataStatus: "failed",
-      overallStatus: "failed",
-      metadataError: "Failed to fetch any report files from S3.",
-    };
-    // Update DB and select only required fields
-    return await Report.findByIdAndUpdate(reportId, updateData, {
-      new: true,
-    })
-    .select(selectionString)
-    .lean<LimitedReportMetadata>();
+     console.error(`Failed to fetch content for any files in report ${reportId}.`);
+     const updateData: Partial<IReport> = {
+       metadataStatus: "failed",
+       overallStatus: "failed",
+       metadataError: "Failed to fetch content for any report files.",
+     };
+     return await Report.findByIdAndUpdate(reportId, updateData, {
+       new: true,
+     })
+     .select(selectionString)
+     .lean<LimitedReportMetadata>();
+   }
+
+  // Log if some files failed to fetch
+  const failedFetches = fetchedFilesData.filter(f => f.error);
+  if (failedFetches.length > 0) {
+      console.warn(`Failed to fetch content for some files: ${failedFetches.map(f => `${f.fileName}: ${f.error}`).join("; ")}`);
+      // Proceeding with successfully fetched files
   }
 
-  // Only proceed with AI if we have files
   const { extractedObject, processingError: aiError } = await extractDataWithAI(
-    successfullyFetchedFiles // Use only successfully fetched files
+    successfullyFetchedFiles
   );
 
-  // Determine Final Statuses and Prepare Update Data
   const finalMetadataStatus: ProcessingPhaseStatus = aiError
     ? "failed"
     : "completed";
-  // If metadata fails, overall fails. If metadata succeeds, overall becomes partial.
   const finalOverallStatus: OverallStatus =
     finalMetadataStatus === "failed"
       ? "failed"
-      : fullReport.overallStatus === "completed" // Check if tests were already done
-      ? "completed"
-      : "partial"; // Metadata done, but tests might be pending/failed
+      : fullReport.overallStatus === "completed"
+        ? "completed"
+        : "partial";
 
   const updateData: Partial<IReport> = {
     metadataStatus: finalMetadataStatus,
     overallStatus: finalOverallStatus,
-    metadataError: aiError, // Store the specific error for this phase
-    // Only update metadata fields if extraction was successful
+    metadataError: aiError,
     ...(!aiError && extractedObject
       ? {
-          // Use extracted data, falling back to initial report data only if necessary (shouldn't happen with defaults)
           title: extractedObject.title ?? fullReport.title,
           patientName: extractedObject.patientName ?? fullReport.patientName,
           patientSex: extractedObject.patientSex ?? fullReport.patientSex,
@@ -404,7 +339,6 @@ const processReportMetadata = async (
       : {}),
   };
 
-  // Update Report in DB and return the *updated* document
   try {
     // Update DB, select only required fields, and return the limited object
     const updatedLimitedReport = await Report.findByIdAndUpdate(
@@ -431,7 +365,6 @@ const processReportMetadata = async (
       `Database error updating report ${reportId} after metadata processing:`,
       dbError
     );
-    // Return null or throw, depending on desired error handling
     return null; // Indicates update failure
   }
 };

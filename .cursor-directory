@@ -43,6 +43,11 @@ shared/ # Reusable components, hooks, types, constants etc.
   # Example: components/ui/ (UI primitives like Button, Input)
   # Example: hooks/ (generic React hooks)
   # Example: lib/ or utils/ (generic helper functions)
+  lib/ # Shared, low-level utility libraries
+    aws/ # AWS related utilities
+      s3.ts # Singleton S3 client generator
+    ai/ # AI related utilities
+      anthropic.ts # Singleton Anthropic client generator
   components/
     layout/
       Header.tsx # Common site header component with logo, navigation, and auth controls
@@ -60,6 +65,13 @@ shared/ # Reusable components, hooks, types, constants etc.
       sidebar.tsx: Primitives for building the sidebar structure
     utils/
       PrefetchNewPage.tsx # Client component to prefetch a route on mount, used for optimization.
+  report: Represents the medical report entity
+    api: Holds API-related logic for reports (fetching, mutations).
+      queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      getMetadata.ts # Fetches/processes metadata for a specific report.
+    lib: Holds library/utility functions specific to the report entity.
+      generateSignedUrls.ts # Generates S3 signed URLs for report files.
+      fetchFileContents.ts # Fetches content of report files from signed URLs.
 
 # Feature-specific modules
 features/ # Contains self-contained feature modules
