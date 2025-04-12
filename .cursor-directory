@@ -23,6 +23,8 @@ app/ # Main application directory following Next.js App Router structure
     report-upload/
       signed-url/
         route.ts # API endpoint to generate pre-signed S3 URLs for report uploads
+      create-record/
+        route.ts # API endpoint to create the report record in DB after successful uploads
   globals.css # Global CSS styles
 
 # Public assets
