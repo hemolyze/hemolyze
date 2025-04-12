@@ -18,8 +18,8 @@ interface IReport {
   labName?: string;
   patientAge?: string; // Using string to accommodate formats like "35 years", "6 months"
   referringDoctor?: string;
-  sampleDate?: Date;
-  reportDate?: Date;
+  sampleDate?: string;
+  reportDate?: string;
   labDirector?: string;
   labContact?: string;
   bloodTests: Record<string, unknown>; // Placeholder for structured test results
@@ -96,11 +96,11 @@ const ReportSchema = new Schema<IReport>(
       required: false,
     },
     sampleDate: {
-      type: Date,
+      type: String,
       required: false,
     },
     reportDate: {
-      type: Date,
+      type: String,
       required: false,
     },
     labDirector: {

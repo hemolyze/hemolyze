@@ -4,9 +4,10 @@ import { connect } from "@/lib/db";
 import Report, { IReportFile } from "@/lib/models/Report"; // Import the Report model and IReportFile type
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3"; // AWS SDK S3 Client
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"; // AWS SDK S3 Presigner
-import { generateText } from "ai"; // Vercel AI SDK
+import { generateObject } from "ai"; // Changed from generateText
 import { LanguageModel } from "ai"; // Import LanguageModel type
 import { anthropic } from "@ai-sdk/anthropic"; // Anthropic provider
+import { z } from "zod"; // Import Zod
 
 // Interface for the file object including the signed URL
 interface ReportFileWithUrl extends IReportFile {
@@ -51,6 +52,79 @@ function checkEnvironmentVariables() {
     throw new Error("Server configuration error: Missing Anthropic API key.");
   }
 }
+
+// --- Zod Schema Definition ---
+
+// Keep bloodTestSchema defined for potential later use, but remove from medicalReportSchema for now
+// const bloodTestSchema = z.object({ /* ... */ });
+
+// Updated schema reflecting IReport structure - WITHOUT bloodTests for now
+const medicalReportSchema = z
+  .object({
+    title: z
+      .string()
+      .describe(
+        "The title of the report, generate based on the report content"
+      ),
+    patientName: z
+      .string()
+      .default("not found")
+      .describe("The patient's full name. Default to 'not found' if missing."),
+    patientSex: z
+      .string()
+      .default("not found")
+      .describe(
+        "The patient's sex (e.g., Male, Female). Default to 'not found' if missing."
+      ),
+    patientAge: z
+      .string()
+      .default("not found")
+      .describe(
+        "The patient's age (e.g., 35 years, 6 months). Default to 'not found' if missing."
+      ),
+    labName: z
+      .string()
+      .default("not found")
+      .describe(
+        "The name of the laboratory. Default to 'not found' if missing."
+      ),
+    referringDoctor: z
+      .string()
+      .default("not found")
+      .describe(
+        "The name of the referring doctor. Default to 'not found' if missing."
+      ),
+    sampleDate: z
+      .string()
+      .describe(
+        "The date the sample was collected, as a string. If not found, return 'not found'."
+      ), // Assuming required based on last user change
+    reportDate: z
+      .string()
+      .describe(
+        "The date the report was issued, as a string. If not found, return 'not found'."
+      ), // Assuming required based on last user change
+    labDirector: z
+      .string()
+      .default("not found")
+      .describe(
+        "The name of the lab director. Default to 'not found' if missing."
+      ),
+    labContact: z
+      .string()
+      .default("not found")
+      .describe(
+        "Contact information for the lab. Default to 'not found' if missing."
+      ),
+    // bloodTests field removed for now
+    // bloodTests: z.array(bloodTestSchema).describe("An array containing extracted blood test results."),
+  })
+  .describe(
+    "Structured representation of key information extracted from medical report(s)."
+  );
+
+// Type inferred from the schema
+type MedicalReportData = z.infer<typeof medicalReportSchema>;
 
 // --- Helper Functions ---
 
@@ -118,19 +192,20 @@ async function fetchFileContents(
 }
 
 /**
- * Extracts text from fetched file contents using the AI model.
+ * Extracts structured data from fetched file contents using the AI model and a Zod schema.
  */
-async function extractTextFromFiles(
+async function extractStructuredDataFromFiles(
   fetchedFiles: FetchedFileData[],
-  aiModel: LanguageModel // Use the imported LanguageModel type
-): Promise<{ extractedCombinedText?: string; processingError?: string }> {
-  let extractedCombinedText: string | undefined = undefined;
+  aiModel: LanguageModel
+): Promise<{ extractedObject?: MedicalReportData; processingError?: string }> {
+  let extractedObject: MedicalReportData | undefined = undefined;
   let processingError: string | undefined = undefined;
 
   const aiContent: AiContentPart[] = [
     {
       type: "text",
-      text: "Analyze the following medical report files. Extract and consolidate key medical information, including test names, values, and units from all documents. If possible, indicate the source file for distinct sets of results.",
+      // Updated prompt to EXCLUDE blood tests
+      text: `Analyze the following medical report file(s) according to the provided schema. Extract the report title, patient details (name, sex, age), lab information (name, director, contact), doctor, report date (as string), and sample date (as string). For string fields like patient name, lab name etc., the schema defaults to \'not found\' if the information is missing - DO NOT explicitly output \'not found\' for those unless it\'s the actual text. For date strings (sampleDate, reportDate), if the date is not found, return the string \'not found\'. Consolidate information if multiple documents are provided. DO NOT extract individual blood test results for now.`,
     },
   ];
 
@@ -148,13 +223,15 @@ async function extractTextFromFiles(
     });
 
     try {
-      const { text } = await generateText({
-        model: aiModel, // Pass the initialized model
+      const { object } = await generateObject({
+        model: aiModel,
+        schema: medicalReportSchema,
         messages: [{ role: "user", content: aiContent }],
+        // Consider adding mode: 'json' if needed, though often inferred
       });
-      extractedCombinedText = text;
+      extractedObject = object;
     } catch (err) {
-      console.error("Error calling generateText:", err);
+      console.error("Error calling generateObject:", err);
       processingError =
         err instanceof Error ? err.message : "AI processing error";
     }
@@ -163,7 +240,7 @@ async function extractTextFromFiles(
     console.error(processingError);
   }
 
-  return { extractedCombinedText, processingError };
+  return { extractedObject, processingError };
 }
 
 export const POST = async (request: NextRequest) => {
@@ -235,24 +312,55 @@ export const POST = async (request: NextRequest) => {
     // 8. Fetch File Contents
     const fetchedFilesData = await fetchFileContents(filesWithUrls);
 
-    // 9. Extract Text using AI
-    const aiModel = anthropic("claude-3-5-sonnet-latest"); // Initialize model here
-    const { extractedCombinedText, processingError } =
-      await extractTextFromFiles(fetchedFilesData, aiModel);
+    // 9. Extract Structured Data using AI
+    const aiModel = anthropic("claude-3-5-sonnet-latest");
+    // Keep result as a single object to avoid unused variable lint error
+    const aiExtractionResult = await extractStructuredDataFromFiles(
+      fetchedFilesData,
+      aiModel
+    );
 
-    // 10. Prepare Final Response
-    const responseReport = {
-      ...newReport.toObject(),
-      files: filesWithUrls, // Contains metadata + signed URLs
-      extractedCombinedText: extractedCombinedText,
-      processingError: processingError,
-    };
+    // --- Now Create the DB Record ---
+
+    // 10. Create Report Record in DB using Extracted Data
+    const newReportWithExtractedData = await Report.create({
+      userId: userId,
+      files: reportFiles, // Store original file info (paths, names) in DB
+      // Access properties directly from aiExtractionResult
+      processingStatus: aiExtractionResult.processingError
+        ? "failed"
+        : "completed",
+      errorMessage: aiExtractionResult.processingError,
+
+      // Map fields from aiExtractionResult.extractedObject
+      title: aiExtractionResult.extractedObject?.title,
+      patientName: aiExtractionResult.extractedObject?.patientName,
+      patientSex: aiExtractionResult.extractedObject?.patientSex,
+      patientAge: aiExtractionResult.extractedObject?.patientAge,
+      labName: aiExtractionResult.extractedObject?.labName,
+      referringDoctor: aiExtractionResult.extractedObject?.referringDoctor,
+      sampleDate: aiExtractionResult.extractedObject?.sampleDate,
+      reportDate: aiExtractionResult.extractedObject?.reportDate,
+      labDirector: aiExtractionResult.extractedObject?.labDirector,
+      labContact: aiExtractionResult.extractedObject?.labContact,
+
+      // Keep bloodTests empty for now as per previous request
+      bloodTests: {},
+    });
+
+    // 11. Prepare Simplified Response for Client
+    // Access processingError directly from aiExtractionResult
+    const processingStatus = aiExtractionResult.processingError
+      ? "failed"
+      : "completed";
 
     return NextResponse.json({
       success: true,
-      message: "Report record created, files processed.",
-      reportId: newReport._id,
-      report: responseReport,
+      // Provide a message indicating outcome
+      message: `Report record created. Processing status: ${processingStatus}`,
+      // Only include the ID needed for routing
+      reportId: newReportWithExtractedData._id,
+      extractedData: newReportWithExtractedData,
     });
   } catch (error) {
     // Outer catch block
