@@ -7,7 +7,7 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
 
   return <div className="flex flex-col gap-2">
     <h1>Report Page</h1>
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Loading Metadata...</div>}>
       <MetadataViewer id={id} />
     </Suspense>
   </div>

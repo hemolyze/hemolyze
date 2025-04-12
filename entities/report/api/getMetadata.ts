@@ -13,6 +13,24 @@ import Report, {
   ProcessingPhaseStatus,
 } from "@/lib/models/Report"; // Ensure this path is correct
 
+// Define the specific fields to return
+export type LimitedReportMetadata = Pick<
+  IReport,
+  |"title"
+  |"patientName"
+  |"patientSex"
+  |"labName"
+  |"patientAge"
+  |"referringDoctor"
+  |"sampleDate"
+  |"reportDate"
+  |"labDirector"
+  |"labContact"
+  |"overallStatus"
+  |"metadataStatus"
+>;
+
+// Keep this alias if used elsewhere, though getReportMetadata now returns the limited type
 export type ReportMetadata = IReport;
 
 type AiContentPart =
@@ -21,7 +39,7 @@ type AiContentPart =
 
 export async function getReportMetadata(
   id: string
-): Promise<ReportMetadata | null> {
+): Promise<LimitedReportMetadata | null> {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     console.log(`Invalid report ID format: ${id}`);
     notFound();
@@ -29,15 +47,17 @@ export async function getReportMetadata(
 
   await connect();
 
-  // Fetch the initial report state
-  const initialReport = await Report.findById(id).lean<IReport>();
+  // Fetch the initial report state, selecting only required fields + status fields
+  const initialReport = await Report.findById(id)
+    .select("title patientName patientSex labName patientAge referringDoctor sampleDate reportDate labDirector labContact overallStatus metadataStatus")
+    .lean<LimitedReportMetadata>();
 
   if (!initialReport) {
     console.log(`Report not found for ID: ${id}`);
     notFound(); // Exit if report not found initially
   }
 
-  // Check if metadata processing is needed
+  // Check if metadata processing is needed using the fetched status
   if (
     initialReport.metadataStatus === "pending" ||
     initialReport.metadataStatus === "failed"
@@ -45,11 +65,18 @@ export async function getReportMetadata(
     console.log(
       `Report ${id} metadata status is ${initialReport.metadataStatus}. Triggering processing.`
     );
-    // Process metadata and return the final state from the DB (or null on error)
-    return await processReportMetadata(initialReport);
+    // Fetch the full report needed for processing
+    const fullReportForProcessing = await Report.findById(id).lean<IReport>();
+    if (!fullReportForProcessing) {
+      // Should not happen if initialReport was found, but handle defensively
+      console.error(`Report ${id} disappeared before processing could start.`);
+      return initialReport; // Return the limited data we already have
+    }
+    // Process metadata (will return the limited type)
+    return await processReportMetadata(fullReportForProcessing);
   }
 
-  // If no processing was needed, return the initially fetched report
+  // If no processing was needed, return the initially fetched limited report
   return initialReport;
 }
 
@@ -279,28 +306,33 @@ async function extractDataWithAI(
   return { extractedObject, processingError };
 }
 
-// Renamed parameter for clarity and added return type
+// Update the return type of the processing function
 const processReportMetadata = async (
-  initialReport: IReport
-): Promise<IReport | null> => {
-  const reportId = initialReport._id;
+  fullReport: IReport // Need the full report to access files etc.
+): Promise<LimitedReportMetadata | null> => {
+  const reportId = fullReport._id;
   console.log(`Starting metadata processing for report: ${reportId}`);
+
+  // Define the fields to select upon successful update or intermediate failures
+  const selectionString = "title patientName patientSex labName patientAge referringDoctor sampleDate reportDate labDirector labContact overallStatus metadataStatus";
 
   let filesWithUrls: ReportFileWithUrl[] = [];
   try {
-    filesWithUrls = await generateSignedUrlsForProcessing(initialReport.files);
+    filesWithUrls = await generateSignedUrlsForProcessing(fullReport.files);
   } catch (error) {
     console.error(`Error generating signed URLs for ${reportId}:`, error);
-    // Update DB with failure status immediately
     const updateData: Partial<IReport> = {
       metadataStatus: "failed",
       overallStatus: "failed",
       metadataError:
         error instanceof Error ? error.message : "Signed URL generation failed",
     };
+    // Update DB and select only required fields
     return await Report.findByIdAndUpdate(reportId, updateData, {
       new: true,
-    }).lean<IReport>();
+    })
+    .select(selectionString)
+    .lean<LimitedReportMetadata>();
   }
 
   const fetchedFilesData = await fetchFileContentsForProcessing(filesWithUrls);
@@ -324,9 +356,12 @@ const processReportMetadata = async (
       overallStatus: "failed",
       metadataError: "Failed to fetch any report files from S3.",
     };
+    // Update DB and select only required fields
     return await Report.findByIdAndUpdate(reportId, updateData, {
       new: true,
-    }).lean<IReport>();
+    })
+    .select(selectionString)
+    .lean<LimitedReportMetadata>();
   }
 
   // Only proceed with AI if we have files
@@ -342,7 +377,7 @@ const processReportMetadata = async (
   const finalOverallStatus: OverallStatus =
     finalMetadataStatus === "failed"
       ? "failed"
-      : initialReport.overallStatus === "completed" // Check if tests were already done
+      : fullReport.overallStatus === "completed" // Check if tests were already done
       ? "completed"
       : "partial"; // Metadata done, but tests might be pending/failed
 
@@ -354,38 +389,43 @@ const processReportMetadata = async (
     ...(!aiError && extractedObject
       ? {
           // Use extracted data, falling back to initial report data only if necessary (shouldn't happen with defaults)
-          title: extractedObject.title ?? initialReport.title,
-          patientName: extractedObject.patientName ?? initialReport.patientName,
-          patientSex: extractedObject.patientSex ?? initialReport.patientSex,
-          patientAge: extractedObject.patientAge ?? initialReport.patientAge,
-          labName: extractedObject.labName ?? initialReport.labName,
+          title: extractedObject.title ?? fullReport.title,
+          patientName: extractedObject.patientName ?? fullReport.patientName,
+          patientSex: extractedObject.patientSex ?? fullReport.patientSex,
+          patientAge: extractedObject.patientAge ?? fullReport.patientAge,
+          labName: extractedObject.labName ?? fullReport.labName,
           referringDoctor:
-            extractedObject.referringDoctor ?? initialReport.referringDoctor,
-          sampleDate: extractedObject.sampleDate ?? initialReport.sampleDate,
-          reportDate: extractedObject.reportDate ?? initialReport.reportDate,
-          labDirector: extractedObject.labDirector ?? initialReport.labDirector,
-          labContact: extractedObject.labContact ?? initialReport.labContact,
+            extractedObject.referringDoctor ?? fullReport.referringDoctor,
+          sampleDate: extractedObject.sampleDate ?? fullReport.sampleDate,
+          reportDate: extractedObject.reportDate ?? fullReport.reportDate,
+          labDirector: extractedObject.labDirector ?? fullReport.labDirector,
+          labContact: extractedObject.labContact ?? fullReport.labContact,
         }
       : {}),
   };
 
   // Update Report in DB and return the *updated* document
   try {
-    const updatedReport = await Report.findByIdAndUpdate(reportId, updateData, {
-      new: true, // Return the modified document
-    }).lean<IReport>(); // Use lean for plain object
+    // Update DB, select only required fields, and return the limited object
+    const updatedLimitedReport = await Report.findByIdAndUpdate(
+      reportId,
+      updateData,
+      { new: true }
+    )
+    .select(selectionString)
+    .lean<LimitedReportMetadata>();
 
-    if (!updatedReport) {
+    if (!updatedLimitedReport) {
       console.error(
         `Failed to update or find report ${reportId} after processing.`
       );
-      return null; // Report might have been deleted concurrently?
+      return null;
     }
 
     console.log(
-      `Finished metadata processing for report ${reportId}. Final status: ${updatedReport.metadataStatus}`
+      `Finished metadata processing for report ${reportId}. Final status: ${updatedLimitedReport.metadataStatus}`
     );
-    return updatedReport;
+    return updatedLimitedReport;
   } catch (dbError) {
     console.error(
       `Database error updating report ${reportId} after metadata processing:`,
