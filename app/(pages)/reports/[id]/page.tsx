@@ -7,7 +7,7 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   // Await the params to get the id
   const { id } = await params;
 
-  return <div className="flex flex-col gap-2 overflow-y-auto">
+  return <div className="flex flex-col gap-2 max-h-[calc(100vh-48px)] overflow-y-auto">
     <Suspense fallback={<MetadataViewerSkeleton />}>
       <MetadataViewer id={id} />
     </Suspense>
