@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
+import { useDropzone, FileRejection, DropzoneOptions, ErrorCode } from 'react-dropzone';
 // import axios, { AxiosProgressEvent } from 'axios'; // Keep commented until actual upload implemented
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -19,6 +19,10 @@ interface UploadProgress {
 interface FileUploadProgress extends File {
   uploadProgress: UploadProgress;
 }
+
+// Define size limits
+const PDF_MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const IMAGE_MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 // Mock function to simulate getting a signed URL and uploading
 // In a real app, this would fetch the URL and then perform the PUT request
@@ -108,20 +112,65 @@ export function FileUploadCard() {
   }, []);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
-    setError(null); // Clear previous errors
+    setError(null);
+    const currentRejections: FileRejection[] = [...fileRejections];
+    const validFiles: File[] = [];
+    const sizeValidationErrors: string[] = [];
 
-    if (fileRejections.length > 0) {
-      setError(`Error: ${fileRejections[0].errors[0].message}. Please upload valid file types.`);
-      // Optionally handle multiple rejections more gracefully
+    acceptedFiles.forEach(file => {
+      let maxSize: number | null = null;
+      let errorMsg = "";
+
+      if (file.type === 'application/pdf') {
+        maxSize = PDF_MAX_SIZE;
+        errorMsg = `PDF files cannot exceed ${PDF_MAX_SIZE / 1024 / 1024}MB.`;
+      } else if (file.type.startsWith('image/')) {
+        maxSize = IMAGE_MAX_SIZE;
+        errorMsg = `Image files cannot exceed ${IMAGE_MAX_SIZE / 1024 / 1024}MB.`;
+      }
+      // Add checks for other specific types if needed
+
+      if (maxSize !== null && file.size > maxSize) {
+        currentRejections.push({
+          file,
+          errors: [{
+            code: ErrorCode.FileTooLarge, // Use standard error code
+            message: errorMsg
+          }]
+        });
+        if (!sizeValidationErrors.includes(errorMsg)) {
+            sizeValidationErrors.push(errorMsg);
+        }
+      } else {
+        validFiles.push(file); // Only add files that pass size validation
+      }
+    });
+
+    // Handle error display
+    if (currentRejections.length > 0) {
+      const typeError = currentRejections.find(r => r.errors.some(e => e.code === ErrorCode.FileInvalidType));
+      const otherErrors = currentRejections.filter(r => !r.errors.some(e => e.code === ErrorCode.FileInvalidType || e.code === ErrorCode.FileTooLarge));
+      
+      let combinedErrorMessage = "";
+      if (typeError) {
+          combinedErrorMessage += "Invalid file type detected. Please upload only accepted types. ";
+      }
+      if (sizeValidationErrors.length > 0) {
+          combinedErrorMessage += sizeValidationErrors.join(" ") + " ";
+      }
+      if (otherErrors.length > 0) {
+          combinedErrorMessage += "Other upload errors occurred.";
+      }
+
+      setError(combinedErrorMessage.trim() || "An unknown error occurred during file validation.");
     }
 
-    const newFiles: FileUploadProgress[] = acceptedFiles.map(file => Object.assign(file, {
+    // Map only valid files to the state
+    const newFiles: FileUploadProgress[] = validFiles.map(file => Object.assign(file, {
       uploadProgress: { progress: 0, status: 'pending' } as UploadProgress,
     }) as FileUploadProgress);
 
-
     setFiles(prevFiles => {
-      // Prevent duplicates
       const uniqueNewFiles = newFiles.filter(
         newFile => !prevFiles.some(existingFile => existingFile.name === newFile.name && existingFile.size === newFile.size)
       );
@@ -132,14 +181,14 @@ export function FileUploadCard() {
 
   const dropzoneOptions: DropzoneOptions = {
     onDrop,
-    accept: { // Example: Accept PDFs and common image types
+    accept: {
       'application/pdf': ['.pdf'],
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/png': ['.png'],
       'image/webp': ['.webp'],
     },
-    maxSize: 10 * 1024 * 1024, // 10MB limit per file
-    // multiple: true, // Default is true
+    // Remove global maxSize, handled in onDrop
+    // maxSize: 10 * 1024 * 1024,
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone(dropzoneOptions);
@@ -172,7 +221,7 @@ export function FileUploadCard() {
           ) : (
             <>
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Drag & drop files here, or click to select</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">PDF, JPG, PNG, WEBP accepted (Max 10MB per file)</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">PDF (Max 10MB), JPG/PNG/WEBP (Max 5MB) accepted</p>
             </>
           )}
         </div>
