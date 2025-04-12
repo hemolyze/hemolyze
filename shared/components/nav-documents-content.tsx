@@ -3,12 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  IconDots,
-  IconFolder,
-  IconShare3,
-  IconTrash,
-  IconFileText,
-} from "@tabler/icons-react";
+  MoreHorizontal,
+  Folder,
+  Share,
+  Trash2,
+  FileText,
+} from "lucide-react";
 
 import {
   DropdownMenu,
@@ -56,7 +56,7 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild>
                 <Link href={item.url} prefetch={true}>
-                  <IconFileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                   <span className="truncate">{item.name}</span>
                 </Link>
               </SidebarMenuButton>
@@ -66,7 +66,7 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
                     showOnHover
                     className="data-[state=open]:bg-accent rounded-sm"
                   >
-                    <IconDots className="h-4 w-4" />
+                    <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">More options for {item.name}</span>
                   </SidebarMenuAction>
                 </DropdownMenuTrigger>
@@ -77,16 +77,16 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
                   sideOffset={5}
                 >
                   <DropdownMenuItem>
-                    <IconFolder className="mr-2 h-4 w-4" />
+                    <Folder className="mr-2 h-4 w-4" />
                     <span>View</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <IconShare3 className="mr-2 h-4 w-4" />
+                    <Share className="mr-2 h-4 w-4" />
                     <span>Share</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20">
-                    <IconTrash className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     <span>Delete</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

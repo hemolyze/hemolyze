@@ -8,27 +8,27 @@ import {
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar"
 import {
-  IconHelp,
-  IconSearch,
-  IconSettings,
-} from "@tabler/icons-react"
+  HelpCircle,
+  Search,
+  Settings,
+} from "lucide-react"
 import Link from "next/link"
 
 const navSecondary = [
   {
     title: "Settings",
     url: "#",
-    icon: IconSettings,
+    icon: Settings,
   },
   {
     title: "Get Help",
     url: "#",
-    icon: IconHelp,
+    icon: HelpCircle,
   },
   {
     title: "Search",
     url: "#",
-    icon: IconSearch,
+    icon: Search,
   },
 ]
 

@@ -1,9 +1,7 @@
 import * as React from "react"
 import { Suspense } from "react"
 import Link from "next/link";
-import {
-  IconPlus,
-} from "@tabler/icons-react"
+import { Plus } from "lucide-react";
 
 import { NavDocuments } from "@/shared/components/nav-documents"
 import { NavDocumentsSkeleton } from "@/shared/components/nav-documents-skeleton"
@@ -61,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
                 aria-label="Create new report"
               >
-                <IconPlus size={16} />
+                <Plus size={16} />
               </Link>
             }
           />
