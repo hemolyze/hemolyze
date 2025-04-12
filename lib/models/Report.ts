@@ -11,6 +11,7 @@ interface IReportFile {
 // Interface defining the structure of a Report document
 interface IReport {
   userId: string; // Reference to the Clerk User ID
+  title?: string;
   files: IReportFile[]; // Array containing details of all associated files
   patientName?: string;
   patientSex?: string; // Added patient sex
@@ -22,7 +23,7 @@ interface IReport {
   labDirector?: string;
   labContact?: string;
   bloodTests: Record<string, unknown>; // Placeholder for structured test results
-  processingStatus: 'pending' | 'processing' | 'completed' | 'failed'; // To track report data extraction status
+  processingStatus: "pending" | "processing" | "completed" | "failed"; // To track report data extraction status
   errorMessage?: string; // Store error message if processing failed
   createdAt?: Date; // Handled by timestamps
   updatedAt?: Date; // Handled by timestamps
@@ -59,16 +60,25 @@ const ReportSchema = new Schema<IReport>(
       required: true,
       index: true, // Index for faster querying by user
     },
+    title: {
+      type: String,
+      required: false,
+      default: "Untitled Report",
+    },
     files: {
       type: [ReportFileSchema], // Use the sub-schema for an array of files
       required: true,
-      validate: [ (v: IReportFile[]) => Array.isArray(v) && v.length > 0, 'At least one file must be provided' ]
+      validate: [
+        (v: IReportFile[]) => Array.isArray(v) && v.length > 0,
+        "At least one file must be provided",
+      ],
     },
     patientName: {
       type: String,
       required: false,
     },
-    patientSex: { // Added patientSex field
+    patientSex: {
+      // Added patientSex field
       type: String,
       required: false,
       // enum: ['Male', 'Female', 'Other', 'Undisclosed'] // Optional: Add enum if specific values are required
@@ -107,15 +117,15 @@ const ReportSchema = new Schema<IReport>(
       default: {},
     },
     processingStatus: {
-        type: String,
-        required: true,
-        enum: ['pending', 'processing', 'completed', 'failed'],
-        default: 'pending',
-        index: true,
+      type: String,
+      required: true,
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
+      index: true,
     },
     errorMessage: {
-        type: String,
-        required: false,
+      type: String,
+      required: false,
     },
   },
   {
@@ -126,4 +136,4 @@ const ReportSchema = new Schema<IReport>(
 const Report = models.Report || model<IReport>("Report", ReportSchema);
 
 export default Report;
-export type { IReport, IReportFile }; // Export the new interfaces 
+export type { IReport, IReportFile }; // Export the new interfaces
