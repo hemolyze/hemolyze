@@ -1,4 +1,84 @@
-import { Schema, model, models } from "mongoose";
+import { Schema, model, models, Types } from "mongoose";
+import { z } from "zod"; // Import Zod
+
+// --- Zod Schemas for Blood Test Data Structure ---
+// Moved here for better co-location with the main model
+
+// Schema for a single test result
+const TestResultSchema = z
+  .object({
+    test: z
+      .string()
+      .describe("Name of the blood test (e.g., Hemoglobin (Hb), RBC Count)"),
+    result: z
+      .union([z.number(), z.string()])
+      .describe(
+        "The measured value of the test. Can be numeric or string (e.g., 'Not Detected')"
+      ),
+    unit: z
+      .string()
+      .optional()
+      .describe("Unit of measurement (e.g., g/dL, %, *10^12/L)"),
+    referenceRange: z
+      .object({
+        min: z
+          .union([z.number(), z.string()])
+          .optional()
+          .describe("Lower bound of the normal range."),
+        max: z
+          .union([z.number(), z.string()])
+          .optional()
+          .describe("Upper bound of the normal range."),
+        text: z
+          .string()
+          .optional()
+          .describe(
+            "Full reference range text if min/max cannot be extracted (e.g., '< 150')"
+          ),
+      })
+      .optional()
+      .describe("The normal reference range for the test."),
+    interpretation: z
+      .string()
+      .optional()
+      .describe(
+        "Interpretation if provided (e.g., High, Low, Normal, Borderline)"
+      ),
+  })
+  .describe("Represents a single blood test result");
+
+// Schema for a group of tests within the 'table' section
+const GroupedTableTestSchema = z
+  .object({
+    group: z
+      .string()
+      .describe("Name of the test panel or group (e.g., CBC, BMP, Lipids)"),
+    tests: z
+      .array(TestResultSchema)
+      .describe("List of individual test results belonging to this group"),
+  })
+  .describe("Represents a group of related tests, often part of a panel");
+
+// Main schema for the extracted blood test data
+export const BloodTestsDataZodSchema = z
+  .object({
+    gauge: z
+      .array(TestResultSchema)
+      .describe(
+        "List of key test results suitable for gauge visualization (e.g., Hemoglobin, Glucose, Cholesterol)"
+      ),
+    table: z
+      .array(GroupedTableTestSchema)
+      .describe(
+        "List of test results grouped by panel/category, suitable for table visualization (e.g., CBC, Liver Panel)"
+      ),
+  })
+  .describe(
+    "Structured representation of blood test results extracted from the report(s)"
+  );
+
+// Type alias for the actual data structure stored/used
+export type BloodTestsData = z.infer<typeof BloodTestsDataZodSchema>;
 
 // Interface for individual file details within a report
 interface IReportFile {
@@ -11,11 +91,16 @@ interface IReportFile {
 // Define the possible statuses for each processing phase
 type ProcessingPhaseStatus = "pending" | "processing" | "completed" | "failed";
 // Define the possible overall statuses
-type OverallStatus = "pending" | "processing" | "partial" | "completed" | "failed";
+type OverallStatus =
+  | "pending"
+  | "processing"
+  | "partial"
+  | "completed"
+  | "failed";
 
 // Interface defining the structure of a Report document
 interface IReport {
-  _id: string;
+  _id: Types.ObjectId; // Use Mongoose ObjectId type
   userId: string; // Reference to the Clerk User ID
   title?: string;
   files: IReportFile[]; // Array containing details of all associated files
@@ -28,13 +113,17 @@ interface IReport {
   reportDate?: string;
   labDirector?: string;
   labContact?: string;
-  bloodTests: Record<string, unknown>; // Placeholder for structured test results
+  // bloodTests: Record<string, unknown>; // Replaced by testsData
 
   // New granular status tracking
   overallStatus: OverallStatus;
   metadataStatus: ProcessingPhaseStatus;
   testsStatus: ProcessingPhaseStatus;
   educationStatus: ProcessingPhaseStatus;
+
+  // --- Specific Data Fields ---
+  // Store the structured test results here
+  testsData?: BloodTestsData | null; // Add the new field
 
   // Optional error messages per phase
   metadataError?: string;
@@ -127,43 +216,47 @@ const ReportSchema = new Schema<IReport>(
       type: String,
       required: false,
     },
-    bloodTests: {
-      type: Schema.Types.Mixed,
-      required: true,
-      default: {},
-    },
+    // bloodTests: { // Replaced by testsData
+    //   type: Schema.Types.Mixed,
+    //   required: true,
+    //   default: {},
+    // },
     // --- New Status Fields ---
     overallStatus: {
-        type: String,
-        required: true,
-        enum: ["pending", "processing", "partial", "completed", "failed"],
-        default: "pending",
-        index: true,
+      type: String,
+      required: true,
+      enum: ["pending", "processing", "partial", "completed", "failed"],
+      default: "pending",
+      index: true,
     },
     metadataStatus: {
-        type: String,
-        required: true,
-        enum: ["pending", "processing", "completed", "failed"],
-        default: "pending",
+      type: String,
+      required: true,
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
     },
-     testsStatus: {
-        type: String,
-        required: true,
-        enum: ["pending", "processing", "completed", "failed"],
-        default: "pending",
+    testsStatus: {
+      type: String,
+      required: true,
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
     },
-     educationStatus: {
-        type: String,
-        required: true,
-        enum: ["pending", "processing", "completed", "failed"],
-        default: "pending",
+    educationStatus: {
+      type: String,
+      required: true,
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
     },
+    // --- Specific Data Fields ---
+    testsData: {
+      type: Schema.Types.Mixed, // Using Mixed for flexibility with the nested structure
+      required: false,
+      default: null,
+    },
+    // --- Error Fields ---
     metadataError: { type: String, required: false },
     testsError: { type: String, required: false },
     educationError: { type: String, required: false },
-    // --- Removed Old Status Fields ---
-    // processingStatus: { ... },
-    // errorMessage: { ... },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields
@@ -173,4 +266,5 @@ const ReportSchema = new Schema<IReport>(
 const Report = models.Report || model<IReport>("Report", ReportSchema);
 
 export default Report;
+// Export the type alias for testsData structure
 export type { IReport, IReportFile, ProcessingPhaseStatus, OverallStatus };

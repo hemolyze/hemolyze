@@ -69,6 +69,7 @@ shared/ # Reusable components, hooks, types, constants etc.
     api: Holds API-related logic for reports (fetching, mutations).
       queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
       getMetadata.ts # Fetches/processes metadata for a specific report.
+      getTestsData.ts # Fetches/processes structured test results for a specific report.
     lib: Holds library/utility functions specific to the report entity.
       generateSignedUrls.ts # Generates S3 signed URLs for report files.
       fetchFileContents.ts # Fetches content of report files from signed URLs.
