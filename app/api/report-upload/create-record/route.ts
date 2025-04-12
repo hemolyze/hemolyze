@@ -36,7 +36,6 @@ export const POST = async (request: NextRequest) => {
         const newReport = await Report.create({
             userId: userId,
             files: reportFiles, // Store original file info (paths, names)
-            processingStatus: "pending", // Set initial status to pending
             // Use default/empty values for metadata - AI will populate later
             title: "Untitled Report", // Default title
             patientName: "",
@@ -49,7 +48,6 @@ export const POST = async (request: NextRequest) => {
             labDirector: "",
             labContact: "",
             bloodTests: {}, // Starts empty
-            errorMessage: undefined, // Clear any previous error message
         });
 
         // 6. Prepare and Return Immediate Response

@@ -8,6 +8,11 @@ interface IReportFile {
   fileSize: number; // Size of the file in bytes
 }
 
+// Define the possible statuses for each processing phase
+type ProcessingPhaseStatus = "pending" | "processing" | "completed" | "failed";
+// Define the possible overall statuses
+type OverallStatus = "pending" | "processing" | "partial" | "completed" | "failed";
+
 // Interface defining the structure of a Report document
 interface IReport {
   userId: string; // Reference to the Clerk User ID
@@ -23,8 +28,18 @@ interface IReport {
   labDirector?: string;
   labContact?: string;
   bloodTests: Record<string, unknown>; // Placeholder for structured test results
-  processingStatus: "pending" | "processing" | "completed" | "failed"; // To track report data extraction status
-  errorMessage?: string; // Store error message if processing failed
+
+  // New granular status tracking
+  overallStatus: OverallStatus;
+  metadataStatus: ProcessingPhaseStatus;
+  testsStatus: ProcessingPhaseStatus;
+  educationStatus: ProcessingPhaseStatus;
+
+  // Optional error messages per phase
+  metadataError?: string;
+  testsError?: string;
+  educationError?: string;
+
   createdAt?: Date; // Handled by timestamps
   updatedAt?: Date; // Handled by timestamps
 }
@@ -116,17 +131,38 @@ const ReportSchema = new Schema<IReport>(
       required: true,
       default: {},
     },
-    processingStatus: {
-      type: String,
-      required: true,
-      enum: ["pending", "processing", "completed", "failed"],
-      default: "pending",
-      index: true,
+    // --- New Status Fields ---
+    overallStatus: {
+        type: String,
+        required: true,
+        enum: ["pending", "processing", "partial", "completed", "failed"],
+        default: "pending",
+        index: true,
     },
-    errorMessage: {
-      type: String,
-      required: false,
+    metadataStatus: {
+        type: String,
+        required: true,
+        enum: ["pending", "processing", "completed", "failed"],
+        default: "pending",
     },
+     testsStatus: {
+        type: String,
+        required: true,
+        enum: ["pending", "processing", "completed", "failed"],
+        default: "pending",
+    },
+     educationStatus: {
+        type: String,
+        required: true,
+        enum: ["pending", "processing", "completed", "failed"],
+        default: "pending",
+    },
+    metadataError: { type: String, required: false },
+    testsError: { type: String, required: false },
+    educationError: { type: String, required: false },
+    // --- Removed Old Status Fields ---
+    // processingStatus: { ... },
+    // errorMessage: { ... },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields
@@ -136,4 +172,4 @@ const ReportSchema = new Schema<IReport>(
 const Report = models.Report || model<IReport>("Report", ReportSchema);
 
 export default Report;
-export type { IReport, IReportFile }; // Export the new interfaces
+export type { IReport, IReportFile, ProcessingPhaseStatus, OverallStatus };

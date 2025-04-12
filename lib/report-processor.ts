@@ -3,7 +3,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { generateObject, LanguageModel } from 'ai';
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from 'zod';
-import Report, { IReportFile, IReport } from "@/lib/models/Report"; // Ensure this path is correct
+import Report, { IReportFile, IReport, OverallStatus, ProcessingPhaseStatus } from "@/lib/models/Report"; // Ensure this path is correct
 
 // --- Zod Schema Definition ---
 
@@ -183,28 +183,41 @@ async function extractDataWithAI(
 // --- Main Processing Function ---
 
 /**
- * Processes a report by fetching its files, extracting structured data using AI,
- * and updating the report document in the database.
+ * Processes the METADATA EXTRACTION phase for a report.
+ * Fetches files, extracts structured metadata using AI,
+ * and updates the report document status and fields.
  * @param reportId The ID of the Report document to process.
  */
-export async function processReport(reportId: string): Promise<void> {
-    console.log(`Starting processing for report ${reportId}...`);
+async function processMetadata(reportId: string): Promise<void> { // Renamed for clarity
+    console.log(`Starting METADATA processing for report ${reportId}...`);
+
     try {
         // 1. Fetch Report from DB
+        // Fetch the full document instance to easily access properties
         const report = await Report.findById(reportId);
         if (!report) {
-            console.error(`Report ${reportId} not found.`);
+            console.error(`Report ${reportId} not found for metadata processing.`);
             return;
         }
 
-         if (report.processingStatus !== 'pending') {
-             console.log(`Report ${reportId} is not pending (status: ${report.processingStatus}). Skipping.`);
+        // Check if metadata processing is needed and overall status allows it
+        if (report.metadataStatus !== 'pending') {
+             console.log(`Report ${reportId} metadata status is not pending (${report.metadataStatus}). Skipping metadata processing.`);
              return;
         }
+         if (report.overallStatus === 'completed' || report.overallStatus === 'failed') {
+             console.log(`Report ${reportId} overall status is ${report.overallStatus}. Skipping metadata processing.`);
+             return;
+         }
+
 
         // 2. Update status to processing
-        await Report.findByIdAndUpdate(reportId, { processingStatus: 'processing' });
-        console.log(`Report ${reportId} status updated to 'processing'.`);
+        const statusUpdate: Partial<IReport> = { metadataStatus: 'processing' };
+         if (report.overallStatus === 'pending') {
+             statusUpdate.overallStatus = 'processing';
+         }
+        await Report.findByIdAndUpdate(reportId, statusUpdate);
+        console.log(`Report ${reportId} status updated to 'processing' for metadata.`);
 
 
         // 3. Generate URLs
@@ -214,54 +227,64 @@ export async function processReport(reportId: string): Promise<void> {
 
         // 4. Fetch Contents
         const fetchedFilesData = await fetchFileContentsForProcessing(filesWithUrls);
-        const fetchErrors = fetchedFilesData.filter(f => f.error).map(f => f.error);
-        if (fetchErrors.length > 0) {
-             console.warn(`Encountered ${fetchErrors.length} errors fetching files for report ${reportId}:`, fetchErrors.join(', '));
-        }
+        // Optional: Check for fetch errors early if needed
 
 
-        // 5. Extract Data
-        console.log(`Starting AI data extraction for report ${reportId}...`);
+        // 5. Extract Metadata using AI
+        console.log(`Starting AI metadata extraction for report ${reportId}...`);
         const { extractedObject, processingError: aiError } = await extractDataWithAI(
             fetchedFilesData
         );
-        console.log(`AI data extraction finished for report ${reportId}. Error: ${aiError ?? 'None'}`);
+        console.log(`AI metadata extraction finished for report ${reportId}. Error: ${aiError ?? 'None'}`);
 
 
-        // 6. Update Report in DB with results
-        const finalStatus = aiError ? 'failed' : 'completed';
-        const updateData: Partial<IReport> & { extractedData?: MedicalReportData } = { 
-            processingStatus: finalStatus,
-            errorMessage: aiError,
-             // Map extractedObject fields to report fields, keeping original if extraction fails
-            title: extractedObject?.title ?? report.title,
-            patientName: extractedObject?.patientName ?? report.patientName,
-            patientSex: extractedObject?.patientSex ?? report.patientSex,
-            patientAge: extractedObject?.patientAge ?? report.patientAge,
-            labName: extractedObject?.labName ?? report.labName,
-            referringDoctor: extractedObject?.referringDoctor ?? report.referringDoctor,
-            sampleDate: extractedObject?.sampleDate ?? report.sampleDate,
-            reportDate: extractedObject?.reportDate ?? report.reportDate,
-            labDirector: extractedObject?.labDirector ?? report.labDirector,
-            labContact: extractedObject?.labContact ?? report.labContact,
-            // You might want to store the raw extracted object too:
-            // extractedData: extractedObject
+        // 6. Determine Final Statuses and Prepare Update Data
+        const finalMetadataStatus: ProcessingPhaseStatus = aiError ? 'failed' : 'completed';
+        // If metadata fails, overall fails. If metadata succeeds, overall becomes partial.
+        const finalOverallStatus: OverallStatus = aiError ? 'failed' : 'partial';
+
+        const updateData: Partial<IReport> = {
+            metadataStatus: finalMetadataStatus,
+            overallStatus: finalOverallStatus,
+            metadataError: aiError, // Store the specific error for this phase
+            // Only update metadata fields if extraction was successful
+            ...( !aiError && extractedObject ? {
+                    title: extractedObject.title ?? report.title,
+                    patientName: extractedObject.patientName ?? report.patientName,
+                    patientSex: extractedObject.patientSex ?? report.patientSex,
+                    patientAge: extractedObject.patientAge ?? report.patientAge,
+                    labName: extractedObject.labName ?? report.labName,
+                    referringDoctor: extractedObject.referringDoctor ?? report.referringDoctor,
+                    sampleDate: extractedObject.sampleDate ?? report.sampleDate,
+                    reportDate: extractedObject.reportDate ?? report.reportDate,
+                    labDirector: extractedObject.labDirector ?? report.labDirector,
+                    labContact: extractedObject.labContact ?? report.labContact,
+                    // Maybe store raw extracted metadata object if needed:
+                    // extractedMetadata: extractedObject
+            } : {}),
         };
 
+        // 7. Update Report in DB with results
         await Report.findByIdAndUpdate(reportId, updateData);
 
-        console.log(`Report ${reportId} processing finished. Final status: ${finalStatus}`);
+        console.log(`Report ${reportId} METADATA processing finished. Metadata status: ${finalMetadataStatus}, Overall status: ${finalOverallStatus}`);
 
     } catch (error) {
-        console.error(`Critical error processing report ${reportId}:`, error);
+        console.error(`Critical error during METADATA processing for report ${reportId}:`, error);
         // Attempt to mark report as failed in catch block
         try {
-             await Report.findByIdAndUpdate(reportId, {
-                 processingStatus: 'failed',
-                 errorMessage: error instanceof Error ? error.message : 'Unknown critical error during processing'
-                });
+            // Ensure we revert overall status if it was changed to processing
+             const failureUpdate: Partial<IReport> = {
+                 metadataStatus: 'failed', // Mark this phase as failed
+                 metadataError: error instanceof Error ? error.message : 'Unknown critical error during metadata processing',
+                 overallStatus: 'failed' // Mark overall as failed on critical error
+             };
+             await Report.findByIdAndUpdate(reportId, failureUpdate);
             } catch (dbError) {
                  console.error(`Failed to update report ${reportId} status to failed after critical error:`, dbError);
                 }
     }
-} 
+}
+
+// Keep the original export name but maybe rename internally later if needed
+export { processMetadata as processReport }; 

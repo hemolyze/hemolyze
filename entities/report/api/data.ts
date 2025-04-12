@@ -24,9 +24,9 @@ export async function getReportData(id: string): Promise<IReport> {
         notFound();
     }
 
-    console.log(`Report ${id} found. Status: ${report.processingStatus}`);
+    console.log(`Report ${id} found. Status: ${report.overallStatus}`);
 
-    if (report.processingStatus === 'pending') {
+    if (report.overallStatus === 'pending') {
         console.log(`Report ${id} is pending. Triggering processing...`);
         try {
             await processReport(id);
@@ -39,7 +39,7 @@ export async function getReportData(id: string): Promise<IReport> {
                  // as something unexpected happened post-processing.
                  throw new Error(`Failed to re-fetch report ${id} after processing.`);
             }
-             console.log(`Report ${id} re-fetched. New status: ${report.processingStatus}`);
+             console.log(`Report ${id} re-fetched. New status: ${report.overallStatus}`);
         } catch (error) {
              console.error(`Error occurred during processReport call for ${id}:`, error);
              // Decide how to handle: re-throw, return original pending, or call notFound?
