@@ -94,3 +94,58 @@ features/report-upload # Contains self-contained modules for specific business f
 # Added report-upload feature directory
 features/report-upload/components # UI components specific to the report upload feature
   FileUploadCard.tsx # Client component handling file selection, drag-and-drop, and upload progress display
+
+# Architecture Guide (`project-architecture.mdc`)
+# Project Details (`project-details.mdc`)
+
+---
+
+# Directories & Files
+
+## `app/` - Application Routes & Core Layout
+- `(pages)/` - Contains different page routes.
+  - `reports/[id]/page.tsx` - Dynamic page to display a specific report.
+- `layout.tsx` - Root layout for the application.
+- `globals.css` - Global CSS styles.
+
+## `components/` - Shared UI Components (Consider moving relevant parts to `shared/components/ui` based on rules)
+
+## `features/` - Self-contained Feature Modules
+- `MetadataViewer.tsx` - Component to display the metadata section of a report.
+- `MetadataViewerSkeleton.tsx` - Skeleton loading state for the MetadataViewer component.
+- `TestViewer.tsx` - Component to display the test results section of a report. (Placeholder/Needs Implementation)
+
+## `entities/` - Core Business Entities
+- `report/` - Represents the report entity.
+  - `api/` - API functions related to reports.
+    - `getMetadata.ts` - Function to fetch report metadata.
+    - `getTests.ts` - Function to fetch report test results.
+  - `types/` - TypeScript types/interfaces for reports.
+    - `index.ts` - Defines the structure for report metadata and test results.
+
+## `lib/` - Low-level Libraries & Utilities
+- `db.ts` - Database connection logic (MongoDB).
+- `models/` - Database models (Mongoose Schemas).
+  - `report.ts` - Mongoose schema and model for the `Report` collection.
+
+## `shared/` - Shared Code (UI Kit, Config, Hooks, Utils)
+- `components/ui/` - Atomic UI components (e.g., from Shadcn).
+  - `skeleton.tsx` - The Shadcn Skeleton component.
+
+## Configuration Files
+- `package.json` - Project dependencies and scripts.
+- `tailwind.config.ts` - Tailwind CSS configuration.
+- `tsconfig.json` - TypeScript configuration.
+- `next.config.mjs` - Next.js configuration.
+- `.env.local.example` - Example environment variables.
+- `.gitignore` - Specifies intentionally untracked files that Git should ignore.
+- `.eslintrc.json` - ESLint configuration for code linting.
+- `postcss.config.js` - PostCSS configuration.
+- `components.json` - Shadcn UI configuration.
+
+---
+
+# Notes
+- Adhere to the import rules defined in `project-architecture.mdc`.
+- Place new components/features/entities in their designated directories.
+- Update this file when adding significant new files or directories.
