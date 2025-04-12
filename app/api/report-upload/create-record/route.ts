@@ -4,21 +4,28 @@ import { connect } from "@/lib/db";
 import Report, { IReportFile } from "@/lib/models/Report"; // Import the Report model and IReportFile type
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3"; // AWS SDK S3 Client
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"; // AWS SDK S3 Presigner
-
-// Interface for the expected request body
-interface CreateReportRequestBody {
-  uploadedFiles: {
-    fileName: string;
-    filePath: string; // This is the S3 key
-    fileType: string;
-    fileSize: number;
-  }[];
-}
+import { generateText } from 'ai'; // Vercel AI SDK
+import { LanguageModel } from 'ai'; // Import LanguageModel type
+import { anthropic } from '@ai-sdk/anthropic'; // Anthropic provider
 
 // Interface for the file object including the signed URL
 interface ReportFileWithUrl extends IReportFile {
-  signedUrl: string;
+    signedUrl: string;
+    // Removed extractedText and error from individual file
 }
+
+// Temporary interface to hold fetched file data
+interface FetchedFileData {
+    fileName: string;
+    fileType: string;
+    fileBuffer: Buffer;
+    error?: string;
+}
+
+// Define the possible shapes for content parts
+type AiContentPart = 
+  | { type: 'text'; text: string } 
+  | { type: 'file'; data: Buffer; mimeType: string };
 
 // Initialize S3 Client - reads credentials and region from environment variables
 // Ensure AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION are set
@@ -30,72 +37,163 @@ const s3Client = new S3Client({
   },
 });
 const S3_BUCKET_NAME = process.env.X_AWS_BUCKET_NAME;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY; // Ensure this is set
+
+// Ensure required environment variables are checked once at startup if possible,
+// but for API routes, checking per request is safer.
+function checkEnvironmentVariables() {
+    if (!S3_BUCKET_NAME) {
+        console.error("S3_BUCKET_NAME environment variable is not set.");
+        throw new Error("Server configuration error: Missing S3 bucket name.");
+    }
+    if (!ANTHROPIC_API_KEY) {
+        console.error("ANTHROPIC_API_KEY environment variable is not set.");
+        throw new Error("Server configuration error: Missing Anthropic API key.");
+    }
+}
+
+// --- Helper Functions ---
+
+/**
+ * Generates pre-signed S3 GET URLs for report files.
+ */
+async function generateSignedUrls(
+    files: IReportFile[],
+    bucketName: string,
+    s3Client: S3Client
+): Promise<ReportFileWithUrl[]> {
+    return Promise.all(
+        files.map(async (file) => {
+            const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: file.filePath,
+            });
+            const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+            return {
+                // Ensure all properties from IReportFile are included
+                fileName: file.fileName,
+                filePath: file.filePath,
+                fileType: file.fileType,
+                fileSize: file.fileSize,
+                signedUrl: signedUrl,
+            };
+        })
+    );
+}
+
+/**
+ * Fetches the content of files from S3 using their signed URLs.
+ */
+async function fetchFileContents(filesWithUrls: ReportFileWithUrl[]): Promise<FetchedFileData[]> {
+    return Promise.all(
+        filesWithUrls.map(async (file) => {
+            try {
+                const response = await fetch(file.signedUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${file.fileName}: ${response.statusText}`);
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                return {
+                    fileName: file.fileName,
+                    fileType: file.fileType,
+                    fileBuffer: Buffer.from(arrayBuffer),
+                };
+            } catch (err) {
+                console.error(`Error fetching file ${file.fileName}:`, err);
+                return {
+                    fileName: file.fileName,
+                    fileType: file.fileType,
+                    fileBuffer: Buffer.alloc(0), // Empty buffer on error
+                    error: err instanceof Error ? err.message : "Unknown fetch error",
+                };
+            }
+        })
+    );
+}
+
+/**
+ * Extracts text from fetched file contents using the AI model.
+ */
+async function extractTextFromFiles(
+    fetchedFiles: FetchedFileData[],
+    aiModel: LanguageModel // Use the imported LanguageModel type
+): Promise<{ extractedCombinedText?: string; processingError?: string }> {
+
+    let extractedCombinedText: string | undefined = undefined;
+    let processingError: string | undefined = undefined;
+
+    const aiContent: AiContentPart[] = [
+        {
+            type: 'text',
+            text: 'Analyze the following medical report files. Extract and consolidate key medical information, including test names, values, and units from all documents. If possible, indicate the source file for distinct sets of results.',
+        },
+    ];
+
+    const successfullyFetchedFiles = fetchedFiles.filter(f => !f.error && f.fileBuffer.length > 0);
+
+    if (successfullyFetchedFiles.length > 0) {
+        successfullyFetchedFiles.forEach(fetchedFile => {
+            aiContent.push({
+                type: 'file',
+                data: fetchedFile.fileBuffer,
+                mimeType: fetchedFile.fileType,
+            });
+        });
+
+        try {
+            const { text } = await generateText({
+                model: aiModel, // Pass the initialized model
+                messages: [{ role: 'user', content: aiContent }],
+            });
+            extractedCombinedText = text;
+        } catch (err) {
+            console.error("Error calling generateText:", err);
+            processingError = err instanceof Error ? err.message : "AI processing error";
+        }
+    } else {
+        processingError = "No files could be successfully fetched for processing.";
+        console.error(processingError);
+    }
+
+    return { extractedCombinedText, processingError };
+}
 
 export const POST = async (request: NextRequest) => {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Check if S3 bucket name is configured
-  if (!S3_BUCKET_NAME) {
-    console.error("S3_BUCKET_NAME environment variable is not set.");
-    return NextResponse.json(
-      { error: "Server configuration error: Missing S3 bucket name." },
-      { status: 500 }
-    );
-  }
-
   try {
-    const body: CreateReportRequestBody = await request.json();
+    // 1. Authentication & Authorization
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 2. Check Environment Variables
+    checkEnvironmentVariables(); // Throws error if missing
+
+    // 3. Parse and Validate Input
+    const body: { uploadedFiles: { fileName: string; filePath: string; fileType: string; fileSize: number }[] } = await request.json();
     const { uploadedFiles } = body;
-
-    // Validate input
-    if (
-      !uploadedFiles ||
-      !Array.isArray(uploadedFiles) ||
-      uploadedFiles.length === 0
-    ) {
-      return NextResponse.json(
-        { error: "Missing or invalid uploadedFiles data" },
-        { status: 400 }
-      );
+    if (!uploadedFiles || !Array.isArray(uploadedFiles) || uploadedFiles.length === 0) {
+      // Add more detailed validation as needed
+      return NextResponse.json({ error: "Missing or invalid uploadedFiles data" }, { status: 400 });
     }
 
-    // Further validation on each file object (optional, but recommended)
-    const isValidFiles = uploadedFiles.every(
-      (file) =>
-        file &&
-        typeof file.fileName === "string" &&
-        typeof file.filePath === "string" &&
-        typeof file.fileType === "string" &&
-        typeof file.fileSize === "number"
-    );
-
-    if (!isValidFiles) {
-      return NextResponse.json(
-        { error: "Invalid data format within uploadedFiles array" },
-        { status: 400 }
-      );
-    }
-
-    // Connect to the database
+    // 4. Database Connection
     await connect();
 
-    // Prepare the files array for the Report model
+    // 5. Prepare Data for DB
     const reportFiles: IReportFile[] = uploadedFiles.map((file) => ({
       fileName: file.fileName,
-      filePath: file.filePath,
+      filePath: file.filePath, // S3 key
       fileType: file.fileType,
       fileSize: file.fileSize,
     }));
 
-    // Create the report document
+    // 6. Create Report Record in DB
     const newReport = await Report.create({
       userId: userId,
       files: reportFiles,
-      processingStatus: "pending", // Initial status
-      // Dummy data (Replace as needed)
+      processingStatus: "pending",
+      // Dummy data - replace as needed
       patientName: "Jane Doe (Dummy)",
       patientSex: "Female",
       patientAge: "30 years",
@@ -105,52 +203,50 @@ export const POST = async (request: NextRequest) => {
       bloodTests: {},
     });
 
-    // Generate pre-signed URLs for the uploaded files (runtime only)
-    const filesWithUrls: ReportFileWithUrl[] = await Promise.all(
-      newReport.files.map(async (file: IReportFile) => {
-        const command = new GetObjectCommand({
-          Bucket: S3_BUCKET_NAME!,
-          Key: file.filePath, // Use filePath as the S3 Key
-        });
-        // Generate a temporary URL valid for 1 hour
-        const signedUrl = await getSignedUrl(s3Client, command, {
-          expiresIn: 3600,
-        });
-        // Manually construct the object using properties from IReportFile
-        return {
-          fileName: file.fileName,
-          filePath: file.filePath,
-          fileType: file.fileType,
-          fileSize: file.fileSize,
-          // Add other IReportFile properties if they exist (e.g., _id if needed, but it's usually not in the interface itself)
-          signedUrl: signedUrl,
-        };
-      })
+    // 7. Generate Signed URLs
+    const filesWithUrls = await generateSignedUrls(
+      newReport.files,
+      S3_BUCKET_NAME!, // Checked above
+      s3Client
     );
 
-    // Prepare the response report object with files containing signed URLs
-    // This does NOT update the database record
+    // 8. Fetch File Contents
+    const fetchedFilesData = await fetchFileContents(filesWithUrls);
+
+    // 9. Extract Text using AI
+    const aiModel = anthropic('claude-3-5-sonnet-latest'); // Initialize model here
+    const { extractedCombinedText, processingError } = await extractTextFromFiles(
+      fetchedFilesData,
+      aiModel
+    );
+
+    // 10. Prepare Final Response
     const responseReport = {
-      ...newReport.toObject(), // Convert Mongoose doc to plain object
-      files: filesWithUrls, // Replace original files array with the one containing URLs
+      ...newReport.toObject(),
+      files: filesWithUrls, // Contains metadata + signed URLs
+      extractedCombinedText: extractedCombinedText,
+      processingError: processingError,
     };
 
     return NextResponse.json({
       success: true,
-      message: "Report record created successfully with signed URLs",
+      message: "Report record created, files processed.",
       reportId: newReport._id,
-      report: responseReport, // Return the report object with runtime signed URLs
+      report: responseReport,
     });
-  } catch (error) {
-    console.error(
-      "Error creating report record or generating signed URLs:",
-      error
-    );
+
+  } catch (error) { // Outer catch block
+    console.error("Error in POST /api/report-upload/create-record:", error);
     let errorMessage = "Internal server error";
-    if (error instanceof Error) {
-      // Handle potential Mongoose validation errors specifically if needed
+    // Use message from thrown configuration errors
+    if (error instanceof Error && (error.message.includes("Server configuration error"))) {
       errorMessage = error.message;
+    } else if (error instanceof Error) {
+      errorMessage = "An unexpected error occurred processing the request."; // More generic for other errors
     }
+    // Log the original error still
+    console.error("Original error details:", error);
+
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 };
