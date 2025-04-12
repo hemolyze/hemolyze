@@ -19,6 +19,10 @@ app/ # Main application directory following Next.js App Router structure
     page.tsx # Page for uploading a new report
   sample/
     page.tsx # Page displaying a sample report visualization
+  api/
+    report-upload/
+      signed-url/
+        route.ts # API endpoint to generate pre-signed S3 URLs for report uploads
   globals.css # Global CSS styles
 
 # Public assets
