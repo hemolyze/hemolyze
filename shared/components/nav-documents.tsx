@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import {
   IconDots,
   IconFolder,
@@ -28,18 +29,25 @@ import Link from "next/link"
 
 export function NavDocuments({
   items,
+  title,
+  action,
 }: {
   items: {
     name: string
     url: string
     icon: Icon
   }[]
+  title: string
+  action?: React.ReactNode
 }) {
   const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Documents</SidebarGroupLabel>
+      <div className="flex items-center justify-between">
+        <SidebarGroupLabel>{title}</SidebarGroupLabel>
+        {action}
+      </div>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
