@@ -1,6 +1,7 @@
 import { Button } from "@/shared/components/ui/button"
 import { Separator } from "@/shared/components/ui/separator"
 import { SidebarTrigger } from "@/shared/components/ui/sidebar"
+import Link from "next/link"
 
 export function SiteHeader() {
   return (
@@ -14,14 +15,14 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">New</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden">
-            <a
+            <Link
               href="https://github.com/hemolyze/hemolyze"
               rel="noopener noreferrer"
               target="_blank"
               className="dark:text-foreground"
             >
               GitHub
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

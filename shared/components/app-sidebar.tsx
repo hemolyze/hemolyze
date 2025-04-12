@@ -7,6 +7,7 @@ import {
   IconReport,
   IconSearch,
   IconSettings,
+  IconPlus,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/shared/components/nav-documents"
@@ -88,8 +89,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {/* <NavMain items={data.navMain} /> */}
-        <NavDocuments items={data.documents} />
+        <div>
+          <div className="flex items-center justify-between px-4 py-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Reports
+            </span>
+            <Link
+              href="/new"
+              className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
+              aria-label="Create new report"
+            >
+              <IconPlus size={16} />
+            </Link>
+          </div>
+          <NavDocuments items={data.documents} />
+        </div>
+
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
