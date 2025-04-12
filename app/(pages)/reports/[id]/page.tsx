@@ -1,13 +1,13 @@
-import MetadataViewer from "@/features/MetadataViewer";
-import TestViewer from "@/features/TestViewer";
+import MetadataViewer from "@/entities/report/components/MetadataViewer";
+import TestViewer from "@/entities/report/components/TestViewer";
 import { Suspense } from "react";
-import MetadataViewerSkeleton from "@/features/MetadataViewerSkeleton";
+import MetadataViewerSkeleton from "@/entities/report/components/MetadataViewerSkeleton";
 
 async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   // Await the params to get the id
   const { id } = await params;
 
-  return <div className="flex flex-col gap-2">
+  return <div className="flex flex-col gap-2 overflow-y-auto">
     <Suspense fallback={<MetadataViewerSkeleton />}>
       <MetadataViewer id={id} />
     </Suspense>
