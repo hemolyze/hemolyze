@@ -202,20 +202,27 @@ async function extractTestsDataWithAI(
 Analyze the provided medical report file(s) and extract blood test results according to the schema.
 Structure the output into two main categories: 'gauge' and 'table'.
 
-1.  **Gauge Tests:** Identify key biomarkers typically monitored closely (like Hemoglobin, Glucose, Total Cholesterol, LDL, HDL, Triglycerides). Place these individual test results in the 'gauge' array. Ensure each result includes 'test' name, 'result' value (numeric or string), 'unit', and 'referenceRange' (with min/max or text). Extract interpretation (High/Low/Normal) if available.
+For EACH test result (both in 'gauge' and within 'table' groups), extract the following:
+- 'test': Name of the blood test (e.g., Hemoglobin (Hb), RBC Count).
+- 'result': The measured value (numeric or string like 'Not Detected').
+- 'unit': Unit of measurement (e.g., g/dL, %, *10^12/L).
+- 'referenceRange': The normal reference range. Extract numeric 'min'/'max' where possible. If range is text (e.g., '< 150'), use the 'text' field.
+- 'interpretation': Interpretation if provided (e.g., High, Low, Normal).
+- 'gaugeMin' & 'gaugeMax': Determine the absolute minimum and maximum values for a visualization scale (like a gauge meter) for this specific test. These values should encompass the reference range and the patient's result, providing reasonable padding. For example, if Hemoglobin result is 10.2 g/dL and range is 11-16, gaugeMin might be 6 and gaugeMax might be 20. If these absolute bounds aren't explicitly stated, estimate logical values based on typical physiological ranges or by extending ~25-50% beyond the reference range width from the reference min/max, ensuring the patient result fits comfortably within.
 
-2.  **Table Tests:** Group remaining tests into panels or categories (like CBC, Complete Blood Count, BMP, Basic Metabolic Panel, CMP, Comprehensive Metabolic Panel, Liver Function Tests, Lipid Panel, Thyroid Panel, Urinalysis etc.).
-    - For each group, create an object in the 'table' array with a 'group' name (e.g., 'CBC').
-    - Populate the 'tests' array within that group with the individual TestResultSchema objects belonging to that panel.
-    - Include 'test' name, 'result', 'unit', 'referenceRange', and 'interpretation' for each test within the group.
-    - If a test doesn't clearly belong to a common panel, create a group named 'Other Tests' or use the section header from the report as the group name.
+Categorize the tests:
+1.  **Gauge Tests:** Identify key biomarkers typically monitored closely (like Hemoglobin, Glucose, Total Cholesterol, LDL, HDL, Triglycerides) and place their full TestResult objects (including gaugeMin/Max) in the 'gauge' array.
+
+2.  **Table Tests:** Group remaining tests into panels or categories (like CBC, BMP, CMP, Liver Panel, etc.).
+    - Create objects in the 'table' array with a 'group' name.
+    - Populate the 'tests' array within that group with the full TestResult objects (including gaugeMin/Max).
+    - Use 'Other Tests' or section headers for ungrouped tests.
 
 **Important:**
-- Extract numeric values for results and reference ranges where possible.
-- If a range is like '< 150' or '> 10', use the 'text' field in referenceRange.
-- Accurately capture test names and units as presented in the report.
-- Consolidate results if multiple reports are provided for the same patient.
-- Adhere strictly to the provided Zod schema: ${JSON.stringify(BloodTestsDataZodSchema.description)}
+- Prioritize extracting numeric values for results, reference ranges, and gauge bounds.
+- Accurately capture test names and units.
+- Consolidate results if multiple reports are provided.
+- Adhere strictly to the provided Zod schema structure.
 `;
 
   const aiContent: AiContentPart[] = [

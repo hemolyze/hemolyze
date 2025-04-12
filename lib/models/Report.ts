@@ -41,11 +41,12 @@ const TestResultSchema = z
     interpretation: z
       .string()
       .optional()
-      .describe(
-        "Interpretation if provided (e.g., High, Low, Normal, Borderline)"
-      ),
+      .describe("Interpretation if provided (e.g., High, Low, Normal, Borderline)"),
+    // Add fields for the full visualization scale
+    gaugeMin: z.number().optional().describe("The absolute minimum value for the visualization gauge/scale start."),
+    gaugeMax: z.number().optional().describe("The absolute maximum value for the visualization gauge/scale end."),
   })
-  .describe("Represents a single blood test result");
+  .describe("Represents a single blood test result including visualization scale bounds");
 
 // Schema for a group of tests within the 'table' section
 const GroupedTableTestSchema = z
