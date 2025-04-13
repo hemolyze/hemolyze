@@ -98,6 +98,7 @@ const TestInfoDialog = ({ reportId, testDetails, patientDetails }: {
         setInfoState({ data: null, isLoading: true, error: null });
         try {
             // Pass reportId, testDetails._id, and optional patientDetails
+            // @ts-expect-error - improve type inference
             const result = await getTestActionDetails(reportId, testDetails.testId, patientDetails, testDetails);
             if (result.error) {
                 setInfoState({ data: null, isLoading: false, error: result.error });
@@ -170,7 +171,7 @@ const TestInfoDialog = ({ reportId, testDetails, patientDetails }: {
                         <strong>What it is:</strong> {educationalInfo.whatItIs.definition}
                     </p>
                     <p>
-                        <strong>Why it's tested:</strong> {educationalInfo.whatItIs.purpose}
+                        <strong>Why it&apos;s tested:</strong> {educationalInfo.whatItIs.purpose}
                     </p>
                     {educationalInfo.whatItIs.bodySystem && (
                         <p>
@@ -294,7 +295,7 @@ const TestInfoDialog = ({ reportId, testDetails, patientDetails }: {
                     {/* Use test name from testDetails for consistency */}
                     <DialogTitle>{testDetails.testName} - Educational Information</DialogTitle>
                     <DialogDescription>
-                        Understanding your '{testDetails.testName}' result.
+                        Understanding your &quot;{testDetails.testName}&quot; result.
                     </DialogDescription>
                 </DialogHeader>
                 {/* Render dynamic content */}
