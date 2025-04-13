@@ -8,13 +8,16 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   // Await the params to get the id
   const { id } = await params;
 
-  return <div className="flex flex-col gap-2 max-h-[calc(100vh-48px)] overflow-y-auto pb-10">
-    <Suspense fallback={<MetadataViewerSkeleton />}>
-      <MetadataViewer id={id} />
-    </Suspense>
-    <Suspense fallback={<TestViewerSkeleton />}>
-      <TestViewer id={id} />
-    </Suspense>
+  return <div className="h-full md:h-[calc(100vh-63px)] overflow-hidden flex flex-col">
+    <div className="flex flex-col gap-2 h-full overflow-y-scroll flex-1">
+      <Suspense fallback={<MetadataViewerSkeleton />}>
+        <MetadataViewer id={id} />
+      </Suspense>
+      <Suspense fallback={<TestViewerSkeleton />}>
+        <TestViewer id={id} />
+      </Suspense>
+    </div>
+
   </div>
 }
 
