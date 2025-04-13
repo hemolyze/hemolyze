@@ -10,7 +10,7 @@ import { cn } from "@/shared/lib/utils";
 import RangeBar from "@/shared/components/ui/RangeBar";
 
 interface TestResult {
-    _id: string;
+    _id?: string; // Make _id optional to match potential source type
     test: string;
     result: number | string; // Result might be numeric or string (e.g., "Not detected")
     unit?: string; // Make unit optional
@@ -84,7 +84,7 @@ export default function TestTableGroup({ group, tests }: TestTableGroupProps) {
                         const resultNum = typeof test.result === 'number' ? test.result : NaN;
 
                         return (
-                            <TableRow key={test._id} className={cn("h-[60px]", outsideRange ? "bg-red-50 dark:bg-red-900/20" : "")}>
+                            <TableRow key={test._id!} className={cn("h-[60px]", outsideRange ? "bg-red-50 dark:bg-red-900/20" : "")}>
                                 <TableCell className="font-medium align-top pt-3">{test.test}</TableCell>
                                 <TableCell className={cn("text-right font-semibold align-top pt-3", outsideRange ? "text-red-600 dark:text-red-400" : "")}>
                                     <div className="flex items-center justify-end gap-2">
