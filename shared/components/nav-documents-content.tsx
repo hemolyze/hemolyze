@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from "react";
-import Link from "next/link";
 import {
   MoreHorizontal,
   Folder,
@@ -26,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/shared/components/ui/sidebar";
+import { NavLink } from "./ui/NavLink";
 
 // Type for report items (can be shared or redefined if needed)
 interface SidebarReportItem {
@@ -56,12 +56,11 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
           {items.map((item) => (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild>
-                <Link href={item.url} prefetch={true}>
-                  <FileText className="h-4 w-4" />
+                <NavLink href={item.url} prefetch={true} icon={<FileText className="h-4 w-4" />}>
                   <span className="flex items-center gap-2">
                     <span className="truncate">{item.name}</span>
                   </span>
-                </Link>
+                </NavLink>
               </SidebarMenuButton>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
