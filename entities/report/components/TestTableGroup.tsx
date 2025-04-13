@@ -8,6 +8,7 @@ import {
 } from "@/shared/components/ui/table";
 import { cn } from "@/shared/lib/utils";
 import RangeBar from "@/shared/components/ui/RangeBar";
+import { Button } from "@/shared/components/ui/button";
 
 interface TestResult {
     _id?: string; // Make _id optional to match potential source type
@@ -85,7 +86,18 @@ export default function TestTableGroup({ group, tests }: TestTableGroupProps) {
 
                         return (
                             <TableRow key={test._id!} className={cn("h-[60px]", outsideRange ? "bg-red-50 dark:bg-red-900/20" : "")}>
-                                <TableCell className="font-medium align-top pt-3">{test.test}</TableCell>
+                                <TableCell className="font-medium align-top pt-3">
+                                    <div className="flex items-center justify-between">
+                                        <span>{test.test}</span>
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            className="p-2 text-xs"
+                                        >
+                                            Learn more
+                                        </Button>
+                                    </div>
+                                </TableCell>
                                 <TableCell className={cn("text-right font-semibold align-top pt-3", outsideRange ? "text-red-600 dark:text-red-400" : "")}>
                                     <div className="flex items-center justify-end gap-2">
                                         <span className={cn(
