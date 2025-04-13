@@ -41,6 +41,10 @@ type AiContentPart =
   | { type: "file"; data: Buffer; mimeType: string }
   | { type: "image"; image: string; mimeType: string }; // Added image type
 
+// Define a type that includes the MongoDB _id for assertion
+type IndividualTestResultType = BloodTestsData['gauge'][number]; // Infer the base test result type
+type TestResultWithId = IndividualTestResultType & { _id?: Types.ObjectId };
+
 // --- Helper function and Type Definition (moved outside extractTestsDataWithAI) ---
 
 // Helper function for mapping, keeps map logic clean
@@ -183,6 +187,35 @@ const processReportTests = async (
   const { extractedObject, processingError: aiError } = await extractTestsDataWithAI(
     successfullyProcessedFilesOrImages // Pass the correctly filtered list
   );
+
+  // --- BEGIN: Manually add _id to each test result ---
+  if (extractedObject && !aiError) {
+    // Ensure Types is imported from mongoose at the top: import mongoose, { Types } from 'mongoose';
+
+    // Add _id to tests in the 'gauge' array
+    if (extractedObject.gauge) {
+      extractedObject.gauge.forEach(test => {
+        if (!(test as TestResultWithId)._id) { // Use helper type for assertion
+           (test as TestResultWithId)._id = new Types.ObjectId(); // Use helper type for assertion
+        }
+      });
+    }
+
+    // Add _id to tests within each group in the 'table' array
+    if (extractedObject.table) {
+      extractedObject.table.forEach(group => {
+        if (group.tests) {
+          group.tests.forEach(test => {
+            if (!(test as TestResultWithId)._id) { // Use helper type for assertion
+              (test as TestResultWithId)._id = new Types.ObjectId(); // Use helper type for assertion
+            }
+          });
+        }
+      });
+    }
+    console.log(`Added MongoDB ObjectIds to ${extractedObject.gauge?.length || 0} gauge tests and tests within ${extractedObject.table?.length || 0} table groups.`);
+  }
+  // --- END: Manually add _id to each test result ---
 
   // 4. Determine Final Statuses and Prepare Update Data
   const finalTestsStatus: ProcessingPhaseStatus = aiError ? "failed" : "completed";
