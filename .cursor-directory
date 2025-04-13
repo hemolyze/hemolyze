@@ -71,6 +71,7 @@ shared/ # Reusable components, hooks, types, constants etc.
   report: Represents the medical report entity
     api: Holds API-related logic for reports (fetching, mutations).
       queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      actions.ts: Server actions related to report entities (e.g., retrieving specific test details).
       getMetadata.ts # Fetches/processes metadata for a specific report.
       getTestsData.ts # Fetches/processes structured test results for a specific report.
     lib: Holds library/utility functions specific to the report entity.
@@ -89,6 +90,10 @@ entities/ # Represents core business entities
   report: Represents the medical report entity
     api: Holds API-related logic for reports (fetching, mutations).
       queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      actions.ts: Server actions related to report entities.
+      getMetadata.ts # Fetches/processes metadata for a specific report.
+      getTestsData.ts # Fetches/processes structured test results for a specific report.
+    lib: Holds library/utility functions specific to the report entity.
 
 # Added features directory
 features/report-upload # Contains self-contained modules for specific business features (e.g., auth, report-upload)
@@ -121,8 +126,11 @@ features/report-upload/components # UI components specific to the report upload 
 ## `entities/` - Core Business Entities
 - `report/` - Represents the report entity.
   - `api/` - API functions related to reports.
+    - `actions.ts` - Server actions related to report entities.
     - `getMetadata.ts` - Function to fetch report metadata.
     - `getTestsData.ts` - Function to fetch report test results.
+  - `components/` - UI components specific to the report entity.
+    - `TestInfoDialog.tsx` - Dialog component to show detailed info about a test.
   - `types/` - TypeScript types/interfaces for reports.
     - `index.ts` - Defines the structure for report metadata and test results.
 

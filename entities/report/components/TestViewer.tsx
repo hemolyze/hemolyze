@@ -26,7 +26,7 @@ export default async function TestViewer({ id }: { id: string }) {
                 highThreshold: gauge.referenceRange?.max as number,
                 initialValue: gauge.result as number,
                 unit: gauge.unit,
-            }} key={gauge.test} infoDialog={<TestInfoDialog testDetails={{
+            }} key={gauge.test} infoDialog={<TestInfoDialog reportId={id} testDetails={{
                 testName: gauge.test,
                 // @ts-expect-error - improve type inference
                 testId: gauge._id,
