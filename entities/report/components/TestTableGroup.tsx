@@ -7,6 +7,7 @@ import {
     TableRow,
 } from "@/shared/components/ui/table";
 import { cn } from "@/shared/lib/utils";
+import RangeBar from "@/shared/components/ui/RangeBar";
 
 interface TestResult {
     test: string;
@@ -43,7 +44,7 @@ function isOutsideRange(result: number | string, range?: { min?: number | string
 
 function formatReferenceRange(range?: { min?: number | string; max?: number | string; text?: string }): string {
     if (!range) return 'N/A';
-    if (range.text) return range.text; // Prioritize textual representation if available
+    if (range.text) return range.text;
     if (range.min !== undefined && range.max !== undefined) {
         return `${range.min} - ${range.max}`;
     }
@@ -58,30 +59,56 @@ function formatReferenceRange(range?: { min?: number | string; max?: number | st
 
 
 export default function TestTableGroup({ group, tests }: TestTableGroupProps) {
-    console.log('table.tests', tests)
     return (
         <div className="w-full border rounded-lg overflow-hidden shadow-sm bg-card mb-6">
             <h3 className="text-lg font-semibold px-4 py-3 border-b bg-muted/40">{group}</h3>
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[40%]">Test</TableHead>
-                        <TableHead className="text-right">Result</TableHead>
-                        <TableHead>Unit</TableHead>
-                        <TableHead>Reference Range</TableHead>
+                        <TableHead className="w-[35%]">Test</TableHead>
+                        <TableHead className="w-[15%] text-right">Result</TableHead>
+                        <TableHead className="w-[10%]">Unit</TableHead>
+                        <TableHead className="w-[40%]">Reference Range</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {tests.map((test, index) => {
                         const outsideRange = isOutsideRange(test.result, test.referenceRange);
+                        const minRangeNum = typeof test.referenceRange?.min === 'string'
+                            ? parseFloat(test.referenceRange.min)
+                            : test.referenceRange?.min;
+                        const maxRangeNum = typeof test.referenceRange?.max === 'string'
+                            ? parseFloat(test.referenceRange.max)
+                            : test.referenceRange?.max;
+                        const resultNum = typeof test.result === 'number' ? test.result : NaN;
+
                         return (
-                            <TableRow key={index} className={cn(outsideRange ? "bg-red-50 dark:bg-red-900/20" : "")}>
-                                <TableCell className="font-medium">{test.test}</TableCell>
-                                <TableCell className={cn("text-right font-semibold", outsideRange ? "text-red-600 dark:text-red-400" : "")}>
-                                    {test.result}
+                            <TableRow key={index} className={cn("h-[60px]", outsideRange ? "bg-red-50 dark:bg-red-900/20" : "")}>
+                                <TableCell className="font-medium align-top pt-3">{test.test}</TableCell>
+                                <TableCell className={cn("text-right font-semibold align-top pt-3", outsideRange ? "text-red-600 dark:text-red-400" : "")}>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <span className={cn(
+                                            "h-2 w-2 rounded-full",
+                                            outsideRange ? "bg-red-500" : "bg-green-500"
+                                        )}></span>
+                                        {test.result}
+                                    </div>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{test.unit}</TableCell>
-                                <TableCell className="text-muted-foreground">{formatReferenceRange(test.referenceRange)}</TableCell>
+                                <TableCell className="text-muted-foreground align-top pt-3">{test.unit ?? 'N/A'}</TableCell>
+                                <TableCell className="align-middle">
+                                    {(typeof resultNum === 'number' && !isNaN(resultNum) && (minRangeNum !== undefined || maxRangeNum !== undefined)) ? (
+                                        <RangeBar
+                                            result={resultNum}
+                                            minRange={minRangeNum}
+                                            maxRange={maxRangeNum}
+                                            unit={test.unit}
+                                        />
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                            {formatReferenceRange(test.referenceRange)}
+                                        </span>
+                                    )}
+                                </TableCell>
                             </TableRow>
                         );
                     })}

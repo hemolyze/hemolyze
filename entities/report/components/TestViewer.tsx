@@ -28,7 +28,7 @@ export default async function TestViewer({ id }: { id: string }) {
             }} key={gauge.test} />
         ))}
         <hr className="w-full border-t border-gray-200 my-4" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full p-4">
+        <div className="grid grid-cols-1 gap-4 w-full p-4">
             {testData.table.map(table => (
                 <TestTableGroup key={table.group} group={table.group} tests={table.tests} />
             ))}

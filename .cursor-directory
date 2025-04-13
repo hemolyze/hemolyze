@@ -55,6 +55,9 @@ shared/ # Reusable components, hooks, types, constants etc.
       button.tsx # Standard button component
       skeleton.tsx # Placeholder skeleton loader component
       dropdown-menu.tsx # Primitives for dropdown menus
+      Gauge.tsx # Displays a single value on a gauge meter with thresholds
+      RangeBar.tsx # Displays a value on a horizontal bar relative to a reference range
+      table.tsx # Shadcn UI Table components
     app-sidebar.tsx: The main application sidebar component, displays navigation, wraps NavDocuments in Suspense.
     nav-documents.tsx: Async Server Component wrapper that fetches report data and renders NavDocumentsContent.
     nav-documents-content.tsx: Client Component ('use client') responsible for rendering the report list UI and handling interactions (e.g., dropdown menu, hooks).
