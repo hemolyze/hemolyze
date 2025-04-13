@@ -7,7 +7,6 @@ import React, { // Import React namespace for types like React.FC, React.ChangeE
     CSSProperties, // Import CSSProperties for inline styles
     JSX
 } from "react";
-import { Button } from "@/shared/components/ui/button"; // Import the Button component
 // Remove PropTypes import, it's no longer needed
 // import PropTypes from "prop-types";
 // import "./Gauge.css"; // Import the CSS file
@@ -75,6 +74,7 @@ interface GaugeOptions {
 // Define the props for the Gauge component
 interface GaugeProps {
     options?: GaugeUserOptions; // User options are optional and partial
+    infoDialog?: React.ReactNode;
 }
 
 // Structure for calculated arc path data
@@ -121,7 +121,7 @@ const describeArc = (cx: number, cy: number, r: number, startDeg: number, endDeg
 
 // --- Gauge Component (Typed) ---
 // Use React.FC<GaugeProps> or the function signature style below
-function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Explicit return type JSX.Element
+function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Element { // Explicit return type JSX.Element
     console.log('userOptions', userOptions)
     // --- Constants (Internal configuration) ---
     // These could be derived from props if needed, but are fixed here
@@ -494,14 +494,7 @@ function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Expl
 
             {/* Learn More Button */}
             <div className="mt-4 text-center"> {/* Container for centering */}
-                <Button
-                    variant="default"
-                    size="sm"
-                    className="p-2 text-xs"
-                    onClick={() => console.log("Learn more clicked for:", options.title)} // Placeholder action
-                >
-                    Learn more
-                </Button>
+                {infoDialog}
             </div>
         </div>
     );
