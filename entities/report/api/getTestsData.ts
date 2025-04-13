@@ -35,9 +35,41 @@ export type LimitedReportTestsData = Pick<
   'testsData' | 'testsStatus' | 'overallStatus' | 'testsError'
 >;
 
+// Update AiContentPart to include images
 type AiContentPart =
   | { type: "text"; text: string }
-  | { type: "file"; data: Buffer; mimeType: string };
+  | { type: "file"; data: Buffer; mimeType: string }
+  | { type: "image"; image: string; mimeType: string }; // Added image type
+
+// --- Helper function and Type Definition (moved outside extractTestsDataWithAI) ---
+
+// Helper function for mapping, keeps map logic clean
+function mapFileToContentPart(file: FetchedFileData): 
+  | { type: "image"; image: string; mimeType: string }
+  | { type: "file"; data: Buffer; mimeType: string }
+  | null
+{ 
+  if (file.fileType.startsWith('image/') && file.signedUrl) {
+    return {
+      type: "image" as const,
+      image: file.signedUrl,
+      mimeType: file.fileType,
+    };
+  } else if (file.fileBuffer.length > 0) {
+     return {
+       type: "file" as const,
+       data: file.fileBuffer,
+       mimeType: file.fileType,
+     };
+  }
+  return null; // Explicitly return null if neither condition met
+}
+
+// Define the types that the file mapping step can produce (excluding null)
+// This represents only the image or file parts, not the text part or null
+type MappedContentPart = NonNullable<ReturnType<typeof mapFileToContentPart>>;
+
+// --- End Helper function and Type Definition ---
 
 /**
  * Fetches or processes the blood test results for a specific report.
@@ -128,19 +160,28 @@ const processReportTests = async (
    }
 
   const fetchedFilesData = await fetchFileContentsForProcessing(validFilesForFetching);
-  const successfullyFetchedFiles = fetchedFilesData.filter(
-    (f) => !f.error && f.fileBuffer.length > 0
+  
+  // Adjust filtering to include images with signedUrls
+  const successfullyProcessedFilesOrImages = fetchedFilesData.filter(
+    (f) => !f.error && (f.fileBuffer.length > 0 || (f.fileType.startsWith('image/') && f.signedUrl))
   );
 
-  if (successfullyFetchedFiles.length === 0) {
-     console.error(`Failed to fetch content for tests in report ${reportId}.`);
+  if (successfullyProcessedFilesOrImages.length === 0) {
+     console.error(`Failed to fetch content or get link for tests in report ${reportId}.`); // Updated message
      // Pass reportId directly
-     return await updateReportWithError(reportId, 'testsStatus', 'testsError', "Failed to fetch content for any report files.", selectionString);
+     return await updateReportWithError(reportId, 'testsStatus', 'testsError', "Failed to process any report files/images.", selectionString); // Updated message
    }
+   
+   // Log if some files failed processing
+   const failedProcessing = fetchedFilesData.filter(f => f.error || !(f.fileBuffer.length > 0 || (f.fileType.startsWith('image/') && f.signedUrl)));
+   if (failedProcessing.length > 0) {
+      console.warn(`Failed to process some files/images for tests: ${failedProcessing.map(f => `${f.fileName}: ${f.error || 'No buffer or image link'}`).join("; ")}`);
+      // Proceeding with successfully processed files/images
+  }
 
   // 3. Extract Data with AI
   const { extractedObject, processingError: aiError } = await extractTestsDataWithAI(
-    successfullyFetchedFiles
+    successfullyProcessedFilesOrImages // Pass the correctly filtered list
   );
 
   // 4. Determine Final Statuses and Prepare Update Data
@@ -187,7 +228,7 @@ const processReportTests = async (
  * Calls the AI model to extract structured blood test data from files.
  */
 async function extractTestsDataWithAI(
-  fetchedFiles: FetchedFileData[]
+  fetchedFiles: FetchedFileData[] // This now includes files with signedUrl for images
 ): Promise<{ extractedObject?: ExtractedBloodTestsData; processingError?: string }> {
   let aiModel: LanguageModel;
   try {
@@ -197,9 +238,9 @@ async function extractTestsDataWithAI(
     return { processingError: err instanceof Error ? err.message : "AI model initialization failed." };
   }
 
-  // Construct the detailed prompt
+  // Construct the detailed prompt - update to mention images
   const prompt = `
-Analyze the provided medical report file(s) and extract blood test results according to the schema.
+Analyze the provided medical report file(s) and/or image(s) (provided as buffers or URLs) and extract blood test results according to the schema.
 Structure the output into two main categories: 'gauge' and 'table'.
 
 For EACH test result (both in 'gauge' and within 'table' groups), extract the following:
@@ -221,18 +262,26 @@ Categorize the tests:
 **Important:**
 - Prioritize extracting numeric values for results, reference ranges, and gauge bounds.
 - Accurately capture test names and units.
-- Consolidate results if multiple reports are provided.
+- Consolidate results if multiple reports/images are provided.
 - Adhere strictly to the provided Zod schema structure.
 `;
 
+  // 1. Create the array of file/image parts first
+  const fileAndImageParts: MappedContentPart[] = fetchedFiles
+      .map(mapFileToContentPart) // Use the helper function (now defined outside)
+      .filter((item): item is MappedContentPart => item !== null); // Filter out nulls
+
+  // 2. Combine the text prompt with the file/image parts
   const aiContent: AiContentPart[] = [
     { type: "text", text: prompt },
-    ...fetchedFiles.map((file) => ({
-      type: "file" as const,
-      data: file.fileBuffer,
-      mimeType: file.fileType,
-    })),
+    ...fileAndImageParts, // Now spreading a correctly typed array
   ];
+
+  // Check if we only have the text prompt (no processable files/images)
+  if (aiContent.length <= 1) {
+      console.warn("No processable files or images found to send to AI for test extraction.");
+      return { processingError: "No processable files or images found." };
+  }
 
   try {
     console.log("Calling generateObject for test data extraction...");
