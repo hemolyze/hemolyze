@@ -1,5 +1,6 @@
 import { getTestsData } from "@/entities/report/api/getTestsData";
 import Gauge from "@/shared/components/ui/Gauge";
+import TestTableGroup from "./TestTableGroup";
 
 export default async function TestViewer({ id }: { id: string }) {
     const data = await getTestsData(id);
@@ -26,5 +27,12 @@ export default async function TestViewer({ id }: { id: string }) {
                 unit: gauge.unit,
             }} key={gauge.test} />
         ))}
+        <hr className="w-full border-t border-gray-200 my-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full p-4">
+            {testData.table.map(table => (
+                <TestTableGroup key={table.group} group={table.group} tests={table.tests} />
+            ))}
+        </div>
+
     </div>;
 }

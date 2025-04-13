@@ -119,7 +119,7 @@ features/report-upload/components # UI components specific to the report upload 
 - `report/` - Represents the report entity.
   - `api/` - API functions related to reports.
     - `getMetadata.ts` - Function to fetch report metadata.
-    - `getTests.ts` - Function to fetch report test results.
+    - `getTestsData.ts` - Function to fetch report test results.
   - `types/` - TypeScript types/interfaces for reports.
     - `index.ts` - Defines the structure for report metadata and test results.
 
@@ -155,3 +155,8 @@ shared/components/ui/GaugeSkeleton.tsx:
 
 entities/report/components/TestViewerSkeleton.tsx:
   # Displays a grid of GaugeSkeleton components as a loading placeholder for TestViewer.
+
+entities/report/api/getTestsData.ts - Fetches processed test data for a specific report.
+entities/report/components/ReportUploader.tsx - Component for uploading medical report files.
+entities/report/components/TestViewer.tsx - Displays various visualizations (gauges, tables) for test results.
+entities/report/components/TestTableGroup.tsx - Renders a table for a specific group of tests (e.g., CBC).
