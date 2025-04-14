@@ -17,7 +17,6 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
         <TestViewer id={id} />
       </Suspense>
     </div>
-
   </div>
 }
 

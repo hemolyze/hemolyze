@@ -8,7 +8,7 @@ import {
 } from "@/shared/components/ui/table";
 import { cn } from "@/shared/lib/utils";
 import RangeBar from "@/shared/components/ui/RangeBar";
-import { Button } from "@/shared/components/ui/button";
+import TestInfoDialog from "./TestInfoDialog";
 
 interface TestResult {
     _id?: string; // Make _id optional to match potential source type
@@ -23,6 +23,7 @@ interface TestResult {
 }
 
 interface TestTableGroupProps {
+    reportId: string;
     group: string;
     tests: TestResult[];
 }
@@ -60,7 +61,7 @@ function formatReferenceRange(range?: { min?: number | string; max?: number | st
 }
 
 
-export default function TestTableGroup({ group, tests }: TestTableGroupProps) {
+export default function TestTableGroup({ reportId, group, tests }: TestTableGroupProps) {
     return (
         <div className="w-full border rounded-lg overflow-hidden shadow-sm bg-card mb-6">
             <h3 className="text-lg font-semibold px-4 py-3 border-b bg-muted/40">{group}</h3>
@@ -89,13 +90,16 @@ export default function TestTableGroup({ group, tests }: TestTableGroupProps) {
                                 <TableCell className="font-medium align-top pt-3">
                                     <div className="flex items-center justify-between">
                                         <span>{test.test}</span>
-                                        <Button
-                                            variant="default"
-                                            size="sm"
-                                            className="p-2 text-xs"
-                                        >
-                                            Learn more
-                                        </Button>
+                                        <TestInfoDialog reportId={reportId} testDetails={{
+                                            testName: test.test,
+                                            testId: String(test._id),
+                                            result: test.result as string,
+                                            unit: test.unit as string,
+                                            referenceRange: {
+                                                min: test.referenceRange?.min as number,
+                                                max: test.referenceRange?.max as number,
+                                            },
+                                        }} />
                                     </div>
                                 </TableCell>
                                 <TableCell className={cn("text-right font-semibold align-top pt-3", outsideRange ? "text-red-600 dark:text-red-400" : "")}>
