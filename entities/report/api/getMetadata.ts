@@ -39,9 +39,11 @@ export type LimitedReportMetadata = Pick<
 // Keep this alias if used elsewhere, though getReportMetadata now returns the limited type
 export type ReportMetadata = IReport;
 
+// Update the AI Content Part type to include images
 type AiContentPart =
   | { type: "text"; text: string }
-  | { type: "file"; data: Buffer; mimeType: string };
+  | { type: "file"; data: Buffer; mimeType: string }
+  | { type: "image"; image: string; mimeType: string }; // Added image type
 
 // Update the return type of the main function
 export async function getReportMetadata(
@@ -153,7 +155,7 @@ const medicalReportSchema = z
 type MedicalReportData = z.infer<typeof medicalReportSchema>;
 
 async function extractDataWithAI(
-  fetchedFiles: FetchedFileData[]
+  fetchedFiles: FetchedFileData[] // This now includes files with signedUrl for images
 ): Promise<{ extractedObject?: MedicalReportData; processingError?: string }> {
   let extractedObject: MedicalReportData | undefined = undefined;
   let processingError: string | undefined = undefined;
@@ -172,22 +174,33 @@ async function extractDataWithAI(
   const aiContent: AiContentPart[] = [
     {
       type: "text",
-      text: `Analyze the following medical report file(s) according to the provided schema. Extract the report title, patient details (name, sex, age), lab information (name, director, contact), doctor, report date (as string), and sample date (as string). For string fields like patient name, lab name etc., the schema defaults to \'not found\' if the information is missing - DO NOT explicitly output \'not found\' for those unless it\'s the actual text. For date strings (sampleDate, reportDate), if the date is not found, return the string \'not found\'. Consolidate information if multiple documents are provided. DO NOT extract individual blood test results for now.`,
+      text: `Analyze the following medical report file(s) and/or image(s) according to the provided schema. You might receive PDF file buffers or image URLs. Extract the report title, patient details (name, sex, age), lab information (name, director, contact), doctor, report date (as string), and sample date (as string). For string fields like patient name, lab name etc., the schema defaults to 'not found' if the information is missing - DO NOT explicitly output 'not found' for those unless it's the actual text. For date strings (sampleDate, reportDate), if the date is not found, return the string 'not found'. Consolidate information if multiple documents/images are provided. DO NOT extract individual blood test results for now.`, // Updated prompt
     },
   ];
 
-  // Filter out files that had errors during fetching or have no buffer
-  const successfullyFetchedFiles = fetchedFiles.filter(
-    (f) => !f.error && f.fileBuffer.length > 0
+  // Filter files that have either a buffer OR a signedUrl (for images)
+  const processableFiles = fetchedFiles.filter(
+    (f) => !f.error && (f.fileBuffer.length > 0 || (f.fileType.startsWith('image/') && f.signedUrl))
   );
 
-  if (successfullyFetchedFiles.length > 0) {
-    successfullyFetchedFiles.forEach((fetchedFile) => {
-      aiContent.push({
-        type: "file",
-        data: fetchedFile.fileBuffer,
-        mimeType: fetchedFile.fileType,
-      });
+  if (processableFiles.length > 0) {
+    processableFiles.forEach((fetchedFile) => {
+      // Check if it's an image with a signedUrl
+      if (fetchedFile.fileType.startsWith('image/') && fetchedFile.signedUrl) {
+        aiContent.push({
+          type: "image",
+          image: fetchedFile.signedUrl, // Use the URL
+          mimeType: fetchedFile.fileType,
+        });
+      } 
+      // Otherwise, assume it's a file with a buffer (like PDF)
+      else if (fetchedFile.fileBuffer.length > 0) {
+        aiContent.push({
+          type: "file",
+          data: fetchedFile.fileBuffer,
+          mimeType: fetchedFile.fileType,
+        });
+      }
     });
 
     try {
@@ -207,7 +220,7 @@ async function extractDataWithAI(
   } else {
     // This case is handled before calling this function in processReportMetadata
     // But keep a log here just in case.
-    processingError = "No successfully fetched files provided to AI for processing.";
+    processingError = "No successfully fetched files or images provided to AI for processing."; // Updated message
     console.warn(processingError);
   }
 
@@ -278,17 +291,18 @@ const processReportMetadata = async (
   // Use imported function
   const fetchedFilesData = await fetchFileContentsForProcessing(validFilesForFetching);
 
-  const successfullyFetchedFiles = fetchedFilesData.filter(
-    (f) => !f.error && f.fileBuffer.length > 0
+  // Adjust filtering logic here as well, based on the updated fetch function behavior
+  const successfullyFetchedOrLinkedFiles = fetchedFilesData.filter(
+    (f) => !f.error && (f.fileBuffer.length > 0 || (f.fileType.startsWith('image/') && f.signedUrl))
   );
 
-  // Handle case where fetching failed for all files that had valid URLs
-  if (successfullyFetchedFiles.length === 0) {
-     console.error(`Failed to fetch content for any files in report ${reportId}.`);
+  // Handle case where fetching/linking failed for all files that had valid URLs
+  if (successfullyFetchedOrLinkedFiles.length === 0) {
+     console.error(`Failed to fetch content or get link for any files in report ${reportId}.`); // Updated message
      const updateData: Partial<IReport> = {
        metadataStatus: "failed",
        overallStatus: "failed",
-       metadataError: "Failed to fetch content for any report files.",
+       metadataError: "Failed to process any report files/images.", // Updated message
      };
      return await Report.findByIdAndUpdate(reportId, updateData, {
        new: true,
@@ -297,15 +311,15 @@ const processReportMetadata = async (
      .lean<LimitedReportMetadata>();
    }
 
-  // Log if some files failed to fetch
-  const failedFetches = fetchedFilesData.filter(f => f.error);
-  if (failedFetches.length > 0) {
-      console.warn(`Failed to fetch content for some files: ${failedFetches.map(f => `${f.fileName}: ${f.error}`).join("; ")}`);
-      // Proceeding with successfully fetched files
+  // Log if some files failed processing (fetch error or missing link after fetch stage)
+  const failedProcessing = fetchedFilesData.filter(f => f.error || !(f.fileBuffer.length > 0 || (f.fileType.startsWith('image/') && f.signedUrl)));
+  if (failedProcessing.length > 0) {
+      console.warn(`Failed to process some files/images: ${failedProcessing.map(f => `${f.fileName}: ${f.error || 'No buffer or image link'}`).join("; ")}`);
+      // Proceeding with successfully processed files/images
   }
 
   const { extractedObject, processingError: aiError } = await extractDataWithAI(
-    successfullyFetchedFiles
+    successfullyFetchedOrLinkedFiles // Pass the correctly filtered list
   );
 
   const finalMetadataStatus: ProcessingPhaseStatus = aiError

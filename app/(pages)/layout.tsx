@@ -19,7 +19,7 @@ const PagesLayout = ({ children }: { children: React.ReactNode }) => {
                 }
             >
                 <AppSidebar variant="inset" />
-                <SidebarInset>
+                <SidebarInset className="overflow-hidden">
                     <SiteHeader />
                     {children}
                 </SidebarInset>

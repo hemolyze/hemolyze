@@ -1,11 +1,9 @@
 /* src/Gauge.css */
 .gauge-meter-container {
   background-color: #fff;
-  padding: 30px 40px;
   border-radius: 15px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   text-align: center;
-  width: 450px; /* Consider making this configurable or responsive */
   box-sizing: border-box;
   margin-bottom: 30px; /* Add margin between multiple gauges */
 }
@@ -20,7 +18,7 @@
 
 .gauge-svg-container {
   display: block;
-  margin: 15px auto;
+  margin: auto;
   width: 100%;
   max-width: 350px;
   height: auto;

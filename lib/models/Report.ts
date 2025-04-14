@@ -7,6 +7,7 @@ import { z } from "zod"; // Import Zod
 // Schema for a single test result
 const TestResultSchema = z
   .object({
+    _id: z.instanceof(Types.ObjectId).optional().describe("MongoDB ObjectId for the test result entry"),
     test: z
       .string()
       .describe("Name of the blood test (e.g., Hemoglobin (Hb), RBC Count)"),
@@ -41,12 +42,36 @@ const TestResultSchema = z
     interpretation: z
       .string()
       .optional()
-      .describe("Interpretation if provided (e.g., High, Low, Normal, Borderline)"),
+      .describe(
+        "Interpretation if provided (e.g., High, Low, Normal, Borderline)"
+      ),
     // Add fields for the full visualization scale
-    gaugeMin: z.number().optional().describe("The absolute minimum value for the visualization gauge/scale start."),
-    gaugeMax: z.number().optional().describe("The absolute maximum value for the visualization gauge/scale end."),
+    gaugeMin: z
+      .number()
+      .optional()
+      .describe(
+        "The absolute minimum value for the visualization gauge/scale start."
+      ),
+    gaugeMax: z
+      .number()
+      .optional()
+      .describe(
+        "The absolute maximum value for the visualization gauge/scale end."
+      ),
+    // Add field for optional educational information (flexible structure)
+    educationalInfo: z
+      .any()
+      .optional()
+      .describe(
+        "Optional field to store structured educational information related to the test. Allows any data structure."
+      ),
   })
-  .describe("Represents a single blood test result including visualization scale bounds");
+  .describe(
+    "Represents a single blood test result including visualization scale bounds and optional educational info"
+  );
+
+// Export the inferred type for a single test result
+export type TestResult = z.infer<typeof TestResultSchema>;
 
 // Schema for a group of tests within the 'table' section
 const GroupedTableTestSchema = z

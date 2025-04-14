@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import mongoose from "mongoose";
 import Report, { IReport } from "@/lib/models/Report";
-import { connect, disconnect } from "@/lib/db";
+import { connect } from "@/lib/db";
 
 interface SidebarReportItem {
   name: string;
@@ -53,7 +53,6 @@ export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
     console.error("Error fetching reports for sidebar (in entities):", error);
     return [];
   } finally {
-    await disconnect();
     // console.log("getReportsForSidebar (in entities): Disconnected from DB.");
   }
 }

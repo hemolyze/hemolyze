@@ -4,6 +4,7 @@ export interface FetchedFileData {
   fileName: string;
   fileType: string;
   fileBuffer: Buffer;
+  signedUrl?: string; // Add optional signedUrl for images
   error?: string;
 }
 
@@ -23,10 +24,23 @@ export async function fetchFileContentsForProcessing(
         return {
           fileName: file.fileName,
           fileType: file.fileType,
-          fileBuffer: Buffer.alloc(0),
+          fileBuffer: Buffer.alloc(0), // Keep buffer empty
           error: "Missing signed URL",
         };
       }
+
+      // Check if it's an image type
+      if (file.fileType.startsWith("image/")) {
+        console.log(`Detected image type for ${file.fileName}, using signed URL.`);
+        return {
+          fileName: file.fileName,
+          fileType: file.fileType,
+          fileBuffer: Buffer.alloc(0), // Keep buffer empty for images
+          signedUrl: file.signedUrl,   // Store the signed URL
+        };
+      }
+
+      // Existing logic for non-image files (like PDFs)
       try {
         const response = await fetch(file.signedUrl);
         if (!response.ok) {
@@ -39,13 +53,14 @@ export async function fetchFileContentsForProcessing(
           fileName: file.fileName,
           fileType: file.fileType,
           fileBuffer: Buffer.from(arrayBuffer),
+          // No signedUrl needed here as we have the buffer
         };
       } catch (err) {
         console.error(`Error fetching file ${file.fileName} from ${file.signedUrl}:`, err);
         return {
           fileName: file.fileName,
           fileType: file.fileType,
-          fileBuffer: Buffer.alloc(0),
+          fileBuffer: Buffer.alloc(0), // Keep buffer empty on error
           error: err instanceof Error ? err.message : "Unknown fetch error",
         };
       }

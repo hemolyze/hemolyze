@@ -55,6 +55,9 @@ shared/ # Reusable components, hooks, types, constants etc.
       button.tsx # Standard button component
       skeleton.tsx # Placeholder skeleton loader component
       dropdown-menu.tsx # Primitives for dropdown menus
+      Gauge.tsx # Displays a single value on a gauge meter with thresholds
+      RangeBar.tsx # Displays a value on a horizontal bar relative to a reference range
+      table.tsx # Shadcn UI Table components
     app-sidebar.tsx: The main application sidebar component, displays navigation, wraps NavDocuments in Suspense.
     nav-documents.tsx: Async Server Component wrapper that fetches report data and renders NavDocumentsContent.
     nav-documents-content.tsx: Client Component ('use client') responsible for rendering the report list UI and handling interactions (e.g., dropdown menu, hooks).
@@ -68,6 +71,7 @@ shared/ # Reusable components, hooks, types, constants etc.
   report: Represents the medical report entity
     api: Holds API-related logic for reports (fetching, mutations).
       queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      actions.ts: Server actions related to report entities (e.g., retrieving specific test details).
       getMetadata.ts # Fetches/processes metadata for a specific report.
       getTestsData.ts # Fetches/processes structured test results for a specific report.
     lib: Holds library/utility functions specific to the report entity.
@@ -86,6 +90,10 @@ entities/ # Represents core business entities
   report: Represents the medical report entity
     api: Holds API-related logic for reports (fetching, mutations).
       queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      actions.ts: Server actions related to report entities.
+      getMetadata.ts # Fetches/processes metadata for a specific report.
+      getTestsData.ts # Fetches/processes structured test results for a specific report.
+    lib: Holds library/utility functions specific to the report entity.
 
 # Added features directory
 features/report-upload # Contains self-contained modules for specific business features (e.g., auth, report-upload)
@@ -118,8 +126,11 @@ features/report-upload/components # UI components specific to the report upload 
 ## `entities/` - Core Business Entities
 - `report/` - Represents the report entity.
   - `api/` - API functions related to reports.
+    - `actions.ts` - Server actions related to report entities.
     - `getMetadata.ts` - Function to fetch report metadata.
-    - `getTests.ts` - Function to fetch report test results.
+    - `getTestsData.ts` - Function to fetch report test results.
+  - `components/` - UI components specific to the report entity.
+    - `TestInfoDialog.tsx` - Dialog component to show detailed info about a test.
   - `types/` - TypeScript types/interfaces for reports.
     - `index.ts` - Defines the structure for report metadata and test results.
 
@@ -155,3 +166,8 @@ shared/components/ui/GaugeSkeleton.tsx:
 
 entities/report/components/TestViewerSkeleton.tsx:
   # Displays a grid of GaugeSkeleton components as a loading placeholder for TestViewer.
+
+entities/report/api/getTestsData.ts - Fetches processed test data for a specific report.
+entities/report/components/ReportUploader.tsx - Component for uploading medical report files.
+entities/report/components/TestViewer.tsx - Displays various visualizations (gauges, tables) for test results.
+entities/report/components/TestTableGroup.tsx - Renders a table for a specific group of tests (e.g., CBC).

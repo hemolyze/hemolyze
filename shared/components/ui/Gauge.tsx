@@ -9,11 +9,8 @@ import React, { // Import React namespace for types like React.FC, React.ChangeE
 } from "react";
 // Remove PropTypes import, it's no longer needed
 // import PropTypes from "prop-types";
-import "./Gauge.css"; // Import the CSS file
-import { Dialog, DialogContent, DialogTrigger } from "@/shared/components/ui/dialog";
-import { Button } from '@/shared/components/ui/button'
-import { Info } from "lucide-react";
-import { getLabel } from "@/shared/lib/patient-education-helpers"; // Import from new location
+// import "./Gauge.css"; // Import the CSS file
+// import { getLabel } from "@/shared/lib/patient-education-helpers"; // Import from new location
 
 // --- Type Definitions ---
 
@@ -77,6 +74,7 @@ interface GaugeOptions {
 // Define the props for the Gauge component
 interface GaugeProps {
     options?: GaugeUserOptions; // User options are optional and partial
+    infoDialog?: React.ReactNode;
 }
 
 // Structure for calculated arc path data
@@ -123,7 +121,7 @@ const describeArc = (cx: number, cy: number, r: number, startDeg: number, endDeg
 
 // --- Gauge Component (Typed) ---
 // Use React.FC<GaugeProps> or the function signature style below
-function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Explicit return type JSX.Element
+function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Element { // Explicit return type JSX.Element
     console.log('userOptions', userOptions)
     // --- Constants (Internal configuration) ---
     // These could be derived from props if needed, but are fixed here
@@ -165,6 +163,7 @@ function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Expl
 
     // --- State (Typed) ---
     const [currentValue, setCurrentValue] = useState<number>(options.initialValue);
+    console.log('currentValue', setCurrentValue)
 
     // --- Derived Calculations (Memoized and Typed) ---
 
@@ -291,61 +290,21 @@ function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Expl
         };
     }, [options.lowThreshold, options.highThreshold, valueToAngle, radius, thresholdLabelRadiusOffset, rangeLabelRadiusOffset, startAngle, endAngle, centerX, centerY]); // Added dependencies
 
-    // --- Event Handlers (Typed) ---
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        let val = parseFloat(event.target.value);
-        if (isNaN(val)) {
-            // Decide handling for NaN, setting to minValue is one option
-            val = options.minValue;
-        }
-        // Clamp value immediately
-        const clampedVal = Math.max(
-            options.minValue,
-            Math.min(options.maxValue, val)
-        );
-        setCurrentValue(clampedVal);
-    };
-
-    // Type the element lookup result
-    const handleUpdateClick = () => {
-        const inputElement = document.getElementById(stableInputId) as HTMLInputElement | null; // Type cast
-        if (inputElement) {
-            const val = parseFloat(inputElement.value);
-            if (!isNaN(val)) {
-                const clampedVal = Math.max(
-                    options.minValue,
-                    Math.min(options.maxValue, val)
-                );
-                setCurrentValue(clampedVal);
-            }
-        }
-    };
-
-    const handleInputKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            // Optional: handleUpdateClick(); // Or rely on state being set by onChange
-        }
-    };
-
-    // Determine status text color (Typed)
-    const statusColor: string = useMemo(() => {
-        if (status === options.lowRangeLabel) return options.lowColor;
-        if (status === options.highRangeLabel) return options.highColor;
-        return options.normalColor;
-    }, [status, options.lowRangeLabel, options.highRangeLabel, options.lowColor, options.normalColor, options.highColor]); // Added dependencies
+    // Determine status background class (Typed)
+    const statusBgClass: string = useMemo(() => {
+        // Use Tailwind classes. Ensure these colors are available.
+        if (status === options.lowRangeLabel) return "bg-red-500"; // Low status - Red
+        if (status === options.highRangeLabel) return "bg-red-500"; // High status - Also Red (typically abnormal)
+        return "bg-green-500"; // Normal status - Green
+    }, [status, options.lowRangeLabel, options.highRangeLabel]); // Dependencies
 
     const valueDisplay: string = isNaN(currentValue)
         ? "--"
         : currentValue.toFixed(options.valuePrecision);
 
-    // Use a stable ID derived from options
-    const stableInputId: string = `gaugeValue-${options.title.replace(/\s+/g, "-")}`;
-
     // Use CSSProperties for inline styles
     const textStyle: CSSProperties = { fontSize: `${options.labelFontSize}px` };
     const rangeLabelStyle: CSSProperties = { fontSize: `${options.labelFontSize + 2}px` };
-    const statusTextStyle: CSSProperties = { color: statusColor };
     const lowArcStyle: CSSProperties = { stroke: options.lowColor };
     const normalArcStyle: CSSProperties = { stroke: options.normalColor };
     const highArcStyle: CSSProperties = { stroke: options.highColor };
@@ -355,35 +314,12 @@ function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Expl
 
     // --- Render JSX ---
     return (
-        <div className="gauge-meter-container relative">
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button size="icon" className="cursor-pointer absolute top-0 right-0 m-4">
-                        <Info />
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    {
-                        // Use nullish coalescing for safety and type inference
-                        Object.entries(userOptions.patientEducation ?? {}).map(([key, value]) => (
-                            <div key={key}>
-                                <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-                                    {/* Removed 'as string' cast, key is inferred as string */}
-                                    {getLabel(key)}
-                                </div>
-                                <div className="text-sm text-gray-800 leading-normal"> {/* Darker text for value */}
-                                    {value}
-                                </div>
-                                {/* <strong className="text-xs">{getLabel(key)}:</strong> <br /> {value} */}
-                            </div>
-                        ))
-                    }
-                </DialogContent>
-            </Dialog>
-            <h1>
+        <div className="gauge-meter-container relative border shadow-md rounded-md p-4">
+            <h1 className="text-lg font-semibold text-gray-700 mb-2">
                 {options.title} {options.unit ? `(${options.unit})` : ""}
             </h1>
 
+            {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
             <svg
                 className="gauge-svg-container"
                 width="400"
@@ -549,27 +485,17 @@ function Gauge({ options: userOptions = {} }: GaugeProps): JSX.Element { // Expl
                     {valueDisplay} {options.unit}
                 </text>
             </svg>
+            {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
 
-            {/* Consider removing or hiding controls if interaction is purely external */}
-            <div className="gauge-controls !hidden"> {/* Kept hidden as per original */}
-                <label htmlFor={stableInputId}>
-                    Enter Value ({options.minValue}-{options.maxValue}):
-                </label>
-                <input
-                    type="number"
-                    id={stableInputId}
-                    min={options.minValue}
-                    max={options.maxValue}
-                    step={1 / Math.pow(10, options.valuePrecision)}
-                    value={isNaN(currentValue) ? '' : currentValue} // Display empty string for NaN if input allows
-                    onChange={handleInputChange}
-                    onKeyDown={handleInputKeyPress} // Changed from onKeyPress for better Enter key handling
-                />
-                <button type="button" onClick={handleUpdateClick}>Update Meter</button>
+            {/* Status Badge */}
+            <span className={`inline-block px-3 py-1 rounded-full text-white text-xs font-semibold mt-2 ${statusBgClass}`}>
+                {status}
+            </span>
+
+            {/* Learn More Button */}
+            <div className="mt-4 text-center"> {/* Container for centering */}
+                {infoDialog}
             </div>
-            <p className="gauge-status-text" style={statusTextStyle}>
-                Status: {status}
-            </p>
         </div>
     );
 }
