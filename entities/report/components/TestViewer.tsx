@@ -28,8 +28,7 @@ export default async function TestViewer({ id }: { id: string }) {
                 unit: gauge.unit,
             }} key={gauge.test} infoDialog={<TestInfoDialog reportId={id} testDetails={{
                 testName: gauge.test,
-                // @ts-expect-error - improve type inference
-                testId: gauge._id,
+                testId: String(gauge._id),
                 result: gauge.result as string,
                 unit: gauge.unit as string,
                 referenceRange: {
@@ -41,6 +40,7 @@ export default async function TestViewer({ id }: { id: string }) {
         <hr className="w-full border-t border-gray-200 my-4" />
         <div className="grid grid-cols-1 gap-4 w-full p-4">
             {testData.table.map(table => (
+                // @ts-expect-error - improve type inference
                 <TestTableGroup key={table.group} group={table.group} tests={table.tests} />
             ))}
         </div>
