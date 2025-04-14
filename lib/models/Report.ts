@@ -7,7 +7,7 @@ import { z } from "zod"; // Import Zod
 // Schema for a single test result
 const TestResultSchema = z
   .object({
-    _id: z.string().optional().describe("Unique identifier for the test result entry"),
+    _id: z.instanceof(Types.ObjectId).optional().describe("MongoDB ObjectId for the test result entry"),
     test: z
       .string()
       .describe("Name of the blood test (e.g., Hemoglobin (Hb), RBC Count)"),

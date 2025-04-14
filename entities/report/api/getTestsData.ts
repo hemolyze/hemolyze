@@ -196,7 +196,6 @@ const processReportTests = async (
     if (extractedObject.gauge) {
       extractedObject.gauge.forEach(test => {
         if (!(test as TestResultWithId)._id) { // Use helper type for assertion
-            // @ts-expect-error - improve type inference
            (test as TestResultWithId)._id = new Types.ObjectId(); // Use helper type for assertion
         }
       });
@@ -208,7 +207,6 @@ const processReportTests = async (
         if (group.tests) {
           group.tests.forEach(test => {
             if (!(test as TestResultWithId)._id) { // Use helper type for assertion
-              // @ts-expect-error - improve type inference
               (test as TestResultWithId)._id = new Types.ObjectId(); // Use helper type for assertion
             }
           });
