@@ -111,7 +111,7 @@ export default function Home() {
               <div className="flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-sm border border-gray-100">
                 <BarChart3 size={32} className="text-green-600" />
                 <h3 className="text-xl font-semibold">Track Progress</h3>
-                <p className="text-gray-600 text-sm">Monitor your health trends over time to see what's changing.</p>
+                <p className="text-gray-600 text-sm">Monitor your health trends over time to see what&apos;s changing.</p>
               </div>
               {/* Benefit 3 */}
               <div className="flex flex-col items-center gap-3 p-6 bg-white rounded-lg shadow-sm border border-gray-100">

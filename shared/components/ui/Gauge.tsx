@@ -321,10 +321,11 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
 
             {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
             <svg
-                className="gauge-svg-container"
-                width="400"
-                height="280"
+                className="gauge-svg-container w-full h-auto"
+                width="100%"
+                height="100%"
                 viewBox="0 0 400 280"
+                preserveAspectRatio="xMidYMid meet"
                 // Add accessibility attributes
                 role="meter"
                 aria-valuemin={options.minValue}
@@ -375,9 +376,32 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                     strokeLinecap="round"
                 />
 
-                {/* Needle group for easier rotation */}
-                {/* @ts-expect-error - Ignore the error for now */}
-                <g className="gauge-needle-group" style={needleStyle} transformOrigin={`${centerX} ${centerY}`}>
+                {/* Threshold indicators - small triangles */}
+                <polygon 
+                    points={`${labelPositions.thresholdLowPos.x-8},${labelPositions.thresholdLowPos.y+15} ${labelPositions.thresholdLowPos.x},${labelPositions.thresholdLowPos.y} ${labelPositions.thresholdLowPos.x+8},${labelPositions.thresholdLowPos.y+15}`} 
+                    fill="#64748b" 
+                    opacity="0.6"
+                />
+                <polygon 
+                    points={`${labelPositions.thresholdHighPos.x-8},${labelPositions.thresholdHighPos.y+15} ${labelPositions.thresholdHighPos.x},${labelPositions.thresholdHighPos.y} ${labelPositions.thresholdHighPos.x+8},${labelPositions.thresholdHighPos.y+15}`} 
+                    fill="#64748b" 
+                    opacity="0.6"
+                />
+
+                {/* Needle with refined styling */}
+                <g className="gauge-needle-group" style={needleStyle} transform-origin={`${centerX} ${centerY}`}>
+                    {/* Needle shadow */}
+                    <line
+                        x1={centerX}
+                        y1={centerY + 5}
+                        x2={centerX}
+                        y2={centerY - radius + (arcStrokeWidth / 2) + 15}
+                        stroke="rgba(0,0,0,0.15)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        transform="translate(1, 1)"
+                    />
+                    {/* Needle */}
                     <line
                         className="gauge-needle"
                         x1={centerX}
@@ -422,9 +446,9 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-threshold"
                     x={labelPositions.thresholdLowPos.x}
-                    y={labelPositions.thresholdLowPos.y}
-                    textAnchor="middle" // Adjust anchor based on position
-                    dy="0.3em" // Vertical alignment tweak
+                    y={labelPositions.thresholdLowPos.y + 35}
+                    textAnchor="middle"
+                    dy="0.3em"
                     style={textStyle}
                 >
                     {options.lowThreshold} {/* Removed unit for less clutter */}
@@ -432,7 +456,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-threshold"
                     x={labelPositions.thresholdHighPos.x}
-                    y={labelPositions.thresholdHighPos.y}
+                    y={labelPositions.thresholdHighPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
@@ -444,7 +468,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeLowPos.x}
-                    y={labelPositions.rangeLowPos.y}
+                    y={labelPositions.rangeLowPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
@@ -454,7 +478,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeNormalPos.x}
-                    y={labelPositions.rangeNormalPos.y}
+                    y={labelPositions.rangeNormalPos.y - 25}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
@@ -464,7 +488,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeHighPos.x}
-                    y={labelPositions.rangeHighPos.y}
+                    y={labelPositions.rangeHighPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}

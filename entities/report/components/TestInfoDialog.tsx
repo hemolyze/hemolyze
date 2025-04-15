@@ -60,7 +60,7 @@ type EducationalInfoState = {
     error: string | null;
 };
 
-const TestInfoDialog = ({ reportId, testDetails, patientDetails }: {
+const TestInfoDialog = ({ reportId, testDetails, patientDetails, cardStyle }: {
     reportId: string; // Assuming reportId is passed as a prop
     testDetails: {
         _id?: string; // Expecting the unique ID of the test result
@@ -78,6 +78,7 @@ const TestInfoDialog = ({ reportId, testDetails, patientDetails }: {
         age: number;
         gender: string;
     };
+    cardStyle?: boolean;
 }) => {
     console.log('testDetails', {
         reportId,
@@ -286,8 +287,8 @@ const TestInfoDialog = ({ reportId, testDetails, patientDetails }: {
         // Use onOpenChange to trigger fetch
         <Dialog onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Test Information">
-                    <InfoIcon className="w-4 h-4" />
+                <Button variant={`${cardStyle ? 'outline' : 'ghost'}`} className={`${cardStyle ? 'w-full bg-blue-100 border-blue-400 hover:bg-blue-200' : ''}`} aria-label="Test Information">
+                    {cardStyle ? <p className="text-xs">Learn More</p> : <InfoIcon className="w-4 h-4" />}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg"> {/* Increased max width */}
