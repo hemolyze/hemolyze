@@ -1,5 +1,5 @@
 import { LanguageModel } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 
 let aiModelInstance: LanguageModel | null = null;
 
@@ -14,8 +14,8 @@ export function getAiModel(): LanguageModel {
   }
   if (!aiModelInstance) {
     // Initialize the specific model you want to use
-    aiModelInstance = anthropic("claude-3-5-sonnet-latest");
-     console.log("Anthropic AI Model Initialized."); // Add log for debugging
+    aiModelInstance = google("gemini-2.0-flash-001");
+    console.log("Anthropic AI Model Initialized."); // Add log for debugging
   }
   return aiModelInstance;
 } 

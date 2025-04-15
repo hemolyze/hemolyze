@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.9",
+    "@ai-sdk/google": "^1.2.10",
     "@aws-sdk/client-s3": "^3.787.0",
     "@aws-sdk/s3-request-presigner": "^3.787.0",
     "@clerk/nextjs": "^6.14.2",

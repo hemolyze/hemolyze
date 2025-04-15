@@ -1,7 +1,7 @@
 import { connect } from "@/lib/db";
 import mongoose, { Types } from "mongoose";
 import { notFound } from "next/navigation";
-import { generateObject, LanguageModel } from "ai";
+import { LanguageModel, generateText, ImagePart, FilePart, TextPart } from "ai";
 import Report, {
   IReport,
   OverallStatus,
@@ -9,7 +9,7 @@ import Report, {
   BloodTestsData,
   BloodTestsDataZodSchema,
 } from "@/lib/models/Report";
-import { getAiModel } from "@/shared/lib/ai/anthropic";
+import { getAiModel } from "@/shared/lib/ai/gemini";
 import {
   generateSignedUrlsForProcessing,
   ReportFileWithUrl,
@@ -35,28 +35,19 @@ export type LimitedReportTestsData = Pick<
   'testsData' | 'testsStatus' | 'overallStatus' | 'testsError'
 >;
 
-// Update AiContentPart to include images
-type AiContentPart =
-  | { type: "text"; text: string }
-  | { type: "file"; data: Buffer; mimeType: string }
-  | { type: "image"; image: string; mimeType: string }; // Added image type
-
 // Define a type that includes the MongoDB _id for assertion
 type IndividualTestResultType = BloodTestsData['gauge'][number]; // Infer the base test result type
 type TestResultWithId = IndividualTestResultType & { _id?: Types.ObjectId };
 
 // --- Helper function and Type Definition (moved outside extractTestsDataWithAI) ---
 
-// Helper function for mapping, keeps map logic clean
-function mapFileToContentPart(file: FetchedFileData): 
-  | { type: "image"; image: string; mimeType: string }
-  | { type: "file"; data: Buffer; mimeType: string }
-  | null
+// Update helper function to return specific SDK types
+function mapFileToContentPart(file: FetchedFileData): ImagePart | FilePart | null
 { 
   if (file.fileType.startsWith('image/') && file.signedUrl) {
     return {
       type: "image" as const,
-      image: file.signedUrl,
+      image: file.signedUrl, // URL is valid for image part
       mimeType: file.fileType,
     };
   } else if (file.fileBuffer.length > 0) {
@@ -66,11 +57,10 @@ function mapFileToContentPart(file: FetchedFileData):
        mimeType: file.fileType,
      };
   }
-  return null; // Explicitly return null if neither condition met
+  return null;
 }
 
-// Define the types that the file mapping step can produce (excluding null)
-// This represents only the image or file parts, not the text part or null
+// MappedContentPart now reflects the SDK types
 type MappedContentPart = NonNullable<ReturnType<typeof mapFileToContentPart>>;
 
 // --- End Helper function and Type Definition ---
@@ -261,7 +251,7 @@ const processReportTests = async (
  * Calls the AI model to extract structured blood test data from files.
  */
 async function extractTestsDataWithAI(
-  fetchedFiles: FetchedFileData[] // This now includes files with signedUrl for images
+  fetchedFiles: FetchedFileData[]
 ): Promise<{ extractedObject?: ExtractedBloodTestsData; processingError?: string }> {
   let aiModel: LanguageModel;
   try {
@@ -271,62 +261,99 @@ async function extractTestsDataWithAI(
     return { processingError: err instanceof Error ? err.message : "AI model initialization failed." };
   }
 
-  // Construct the detailed prompt - update to mention images
-  const prompt = `
-Analyze the provided medical report file(s) and/or image(s) (provided as buffers or URLs) and extract blood test results according to the schema.
-Structure the output into two main categories: 'gauge' and 'table'.
+  // Construct the detailed prompt with explicit JSON structure
+  const promptText = `
+Analyze the provided medical report file(s) and/or image(s) and extract blood test results.
+Return your response as a JSON string with this exact structure:
+{
+  "gauge": [
+    {
+      "test": "string",
+      "result": "number or string",
+      "unit": "string",
+      "referenceRange": {
+        "min": "number (optional)",
+        "max": "number (optional)",
+        "text": "string (optional)"
+      },
+      "interpretation": "string",
+      "gaugeMin": "number",
+      "gaugeMax": "number"
+    }
+  ],
+  "table": [
+    {
+      "group": "string",
+      "tests": [
+        {
+          // same structure as gauge items
+        }
+      ]
+    }
+  ]
+}
 
-For EACH test result (both in 'gauge' and within 'table' groups), extract the following:
-- 'test': Name of the blood test (e.g., Hemoglobin (Hb), RBC Count).
-- 'result': The measured value (numeric or string like 'Not Detected').
-- 'unit': Unit of measurement (e.g., g/dL, %, *10^12/L).
-- 'referenceRange': The normal reference range. Extract numeric 'min'/'max' where possible. If range is text (e.g., '< 150'), use the 'text' field.
-- 'interpretation': Interpretation if provided (e.g., High, Low, Normal).
-- 'gaugeMin' & 'gaugeMax': Determine the absolute minimum and maximum values for a visualization scale (like a gauge meter) for this specific test. These values should encompass the reference range and the patient's result, providing reasonable padding. For example, if Hemoglobin result is 10.2 g/dL and range is 11-16, gaugeMin might be 6 and gaugeMax might be 20. If these absolute bounds aren't explicitly stated, estimate logical values based on typical physiological ranges or by extending ~25-50% beyond the reference range width from the reference min/max, ensuring the patient result fits comfortably within.
+For EACH test result (both in 'gauge' and within 'table' groups), extract:
+- 'test': Name of the blood test (e.g., Hemoglobin (Hb), RBC Count)
+- 'result': The measured value (numeric or string like 'Not Detected')
+- 'unit': Unit of measurement (e.g., g/dL, %, *10^12/L)
+- 'referenceRange': The normal reference range. Extract numeric 'min'/'max' where possible. If range is text (e.g., '< 150'), use the 'text' field
+- 'interpretation': Interpretation if provided (e.g., High, Low, Normal)
+- 'gaugeMin' & 'gaugeMax': Determine absolute minimum and maximum values for visualization
 
 Categorize the tests:
-1.  **Gauge Tests:** Identify key biomarkers typically monitored closely (like Hemoglobin, Glucose, Total Cholesterol, LDL, HDL, Triglycerides) and place their full TestResult objects (including gaugeMin/Max) in the 'gauge' array.
+1. Gauge Tests: Key biomarkers typically monitored closely (like Hemoglobin, Glucose, etc.)
+2. Table Tests: Group remaining tests into panels or categories (like CBC, BMP, etc.)
 
-2.  **Table Tests:** Group remaining tests into panels or categories (like CBC, BMP, CMP, Liver Panel, etc.).
-    - Create objects in the 'table' array with a 'group' name.
-    - Populate the 'tests' array within that group with the full TestResult objects (including gaugeMin/Max).
-    - Use 'Other Tests' or section headers for ungrouped tests.
-
-**Important:**
-- Prioritize extracting numeric values for results, reference ranges, and gauge bounds.
-- Accurately capture test names and units.
-- Consolidate results if multiple reports/images are provided.
-- Adhere strictly to the provided Zod schema structure.
+IMPORTANT: 
+- Your response must be a valid JSON string that exactly matches the structure above
+- Do not include any explanatory text before or after the JSON
+- Ensure all numeric values are actual numbers, not strings
 `;
 
-  // 1. Create the array of file/image parts first
-  const fileAndImageParts: MappedContentPart[] = fetchedFiles
-      .map(mapFileToContentPart) // Use the helper function (now defined outside)
-      .filter((item): item is MappedContentPart => item !== null); // Filter out nulls
+  // Create the array of file/image parts using specific SDK types
+  const fileAndImageParts: (ImagePart | FilePart)[] = fetchedFiles
+    .map(mapFileToContentPart)
+    .filter((item): item is MappedContentPart => item !== null);
 
-  // 2. Combine the text prompt with the file/image parts
-  const aiContent: AiContentPart[] = [
-    { type: "text", text: prompt },
-    ...fileAndImageParts, // Now spreading a correctly typed array
+  // Construct the message content array with explicit types
+  const messageContent: (TextPart | ImagePart | FilePart)[] = [
+    { type: "text", text: promptText }, // Explicitly TextPart
+    ...fileAndImageParts,
   ];
 
-  // Check if we only have the text prompt (no processable files/images)
-  if (aiContent.length <= 1) {
-      console.warn("No processable files or images found to send to AI for test extraction.");
-      return { processingError: "No processable files or images found." };
+  if (messageContent.length <= 1) { // Check if only text part exists
+    console.warn("No processable files or images found to send to AI for test extraction.");
+    return { processingError: "No processable files or images found." };
   }
 
   try {
-    console.log("Calling generateObject for test data extraction...");
-    const { object } = await generateObject({
+    console.log("Requesting test data extraction from AI...");
+    const { text: rawResponse } = await generateText({
       model: aiModel,
-      schema: BloodTestsDataZodSchema,
-      messages: [{ role: "user", content: aiContent }],
+      // Pass the correctly typed message structure
+      messages: [{ role: "user", content: messageContent }]
     });
-    console.log("AI test data extraction successful.");
-    return { extractedObject: object };
+
+    // Clean potential markdown fences from the response
+    const cleanedResponse = rawResponse
+      .trim() // Remove leading/trailing whitespace
+      .replace(/^```json\s*/, '') // Remove leading ```json
+      .replace(/\s*```$/, '');    // Remove trailing ```
+
+    // Parse the cleaned response as JSON and validate against our schema
+    try {
+      const parsedData = JSON.parse(cleanedResponse);
+      const validatedData = BloodTestsDataZodSchema.parse(parsedData);
+      console.log("AI test data extraction and validation successful.");
+      return { extractedObject: validatedData };
+    } catch (parseError) {
+      console.error("Error parsing or validating cleaned AI response:", parseError);
+      console.error("Cleaned AI Response was:", cleanedResponse); // Log the cleaned response for debugging
+      return { processingError: "Failed to parse AI response into valid test data structure" };
+    }
   } catch (err) {
-    console.error("Error calling generateObject for tests:", err);
+    console.error("Error getting AI completion for tests:", err);
     return { processingError: err instanceof Error ? err.message : "AI processing error" };
   }
 }
