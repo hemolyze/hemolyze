@@ -32,14 +32,14 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   try {
     await connect();
     // Fetch the report with all required fields, explicitly typing the result
-    const report: Pick<IReport, 
-      'patientName' | 'patientAge' | 'patientSex' | 'referringDoctor' | 
-      'labName' | 'sampleDate' | 'reportDate' | 'labDirector' | 'labContact' | 
-      'testsData'
-    > | null = await Report.findOne({ _id: id })
+    const report = await Report.findOne({ _id: id })
       .select('patientName patientAge patientSex referringDoctor labName sampleDate reportDate labDirector labContact testsData') 
       .lean()
-      .exec();
+      .exec() as Pick<IReport, 
+        'patientName' | 'patientAge' | 'patientSex' | 'referringDoctor' | 
+        'labName' | 'sampleDate' | 'reportDate' | 'labDirector' | 'labContact' | 
+        'testsData'
+      > | null;
 
     if (!report) {
       reportFound = false;
