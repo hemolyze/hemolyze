@@ -1,6 +1,4 @@
 'use client'; // Clerk components require client-side interaction
-
-import Link from "next/link";
 import {
     SignInButton,
     SignUpButton,
@@ -31,9 +29,6 @@ export function Header() {
                     <Logo />
                 </Link>
                 <nav className="flex items-center space-x-4 md:space-x-6">
-                    <Link href="/features" className="text-sm font-medium text-gray-600 hover:text-gray-900">
-                        Features
-                    </Link>
                     <SignedOut>
                         <SignInButton>
                             <Button variant="ghost" size="sm" className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100">Login</Button>

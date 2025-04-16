@@ -148,9 +148,9 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
         normalRangeLabel: "Normal",
         highRangeLabel: "High",
         valuePrecision: 1,
-        lowColor: "#ef4444", // Red-500 for border
-        normalColor: "#22c55e", // Green-500 for border
-        highColor: "#ef4444", // Matching low color
+        lowColor: "#D9534F",
+        normalColor: "#5CB85C",
+        highColor: "#D9534F",
         labelFontSize: 13,
     };
 
@@ -292,10 +292,11 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
 
     // Determine status background class (Typed)
     const statusBgClass: string = useMemo(() => {
-        if (status === options.lowRangeLabel) return "bg-white text-red-600 border border-red-400"; 
-        if (status === options.highRangeLabel) return "bg-white text-red-600 border border-red-400"; 
-        return "bg-white text-green-600 border border-green-400"; 
-    }, [status, options.lowRangeLabel, options.highRangeLabel]); 
+        // Use Tailwind classes. Ensure these colors are available.
+        if (status === options.lowRangeLabel) return "bg-red-500"; // Low status - Red
+        if (status === options.highRangeLabel) return "bg-red-500"; // High status - Also Red (typically abnormal)
+        return "bg-green-500"; // Normal status - Green
+    }, [status, options.lowRangeLabel, options.highRangeLabel]); // Dependencies
 
     const valueDisplay: string = isNaN(currentValue)
         ? "--"
@@ -304,24 +305,27 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
     // Use CSSProperties for inline styles
     const textStyle: CSSProperties = { fontSize: `${options.labelFontSize}px` };
     const rangeLabelStyle: CSSProperties = { fontSize: `${options.labelFontSize + 2}px` };
-    const needleStyle: CSSProperties = { 
-        transform: `rotate(${needleAngle}deg)`, 
-        transition: 'transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)' // Bouncy effect
-    };
+    const lowArcStyle: CSSProperties = { stroke: options.lowColor };
+    const normalArcStyle: CSSProperties = { stroke: options.normalColor };
+    const highArcStyle: CSSProperties = { stroke: options.highColor };
+    const capStartStyle: CSSProperties = { stroke: options.lowColor };
+    const capEndStyle: CSSProperties = { stroke: options.highColor };
+    const needleStyle: CSSProperties = { transform: `rotate(${needleAngle}deg)` };
 
     // --- Render JSX ---
     return (
-        <div className="gauge-meter-container relative border border-gray-200 shadow-lg rounded-lg p-6 bg-white">
-            <h1 className="text-lg font-semibold text-gray-800 mb-3 text-center">
+        <div className="gauge-meter-container relative border shadow-md rounded-md p-4">
+            <h1 className="text-lg font-semibold text-gray-700 mb-2">
                 {options.title} {options.unit ? `(${options.unit})` : ""}
             </h1>
 
             {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
             <svg
-                className="gauge-svg-container"
-                width="400"
-                height="280"
+                className="gauge-svg-container w-full h-auto"
+                width="100%"
+                height="100%"
                 viewBox="0 0 400 280"
+                preserveAspectRatio="xMidYMid meet"
                 // Add accessibility attributes
                 role="meter"
                 aria-valuemin={options.minValue}
@@ -331,91 +335,55 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 aria-label={`${options.title} Gauge`}
             >
                 <title>{`${options.title}: ${valueDisplay} ${options.unit} (${status})`}</title>
-                
-                {/* Track background */}
+                {/* Arcs */}
                 <path
-                    d={describeArc(centerX, centerY, radius, startAngle, endAngle)}
+                    className="gauge-arc gauge-arc-low"
+                    d={arcData.lowD}
+                    style={lowArcStyle}
+                    strokeWidth={arcStrokeWidth} // Apply strokeWidth directly
+                    fill="none"
+                />
+                <path
+                    className="gauge-arc gauge-arc-normal"
+                    d={arcData.normalD}
+                    style={normalArcStyle}
                     strokeWidth={arcStrokeWidth}
                     fill="none"
-                    stroke="#f1f5f9" // Slate-100 for subtle background
+                />
+                <path
+                    className="gauge-arc gauge-arc-high"
+                    d={arcData.highD}
+                    style={highArcStyle}
+                    strokeWidth={arcStrokeWidth}
+                    fill="none"
+                />
+
+                {/* Caps */}
+                <path
+                    className="gauge-arc-cap"
+                    d={arcData.capStartD}
+                    style={capStartStyle}
+                    strokeWidth={arcStrokeWidth}
+                    fill="none"
+                    strokeLinecap="round" // Use round caps for better appearance
+                />
+                <path
+                    className="gauge-arc-cap"
+                    d={arcData.capEndD}
+                    style={capEndStyle}
+                    strokeWidth={arcStrokeWidth}
+                    fill="none"
                     strokeLinecap="round"
                 />
-                
-                {/* Create filled arcs with borders */}
-                <g>
-                    {/* Low range - wide path for fill */}
-                    <path
-                        className="gauge-arc-fill"
-                        d={arcData.lowD}
-                        strokeWidth={arcStrokeWidth - 2}
-                        fill="none"
-                        stroke="#fee2e2" // Light red fill (red-100)
-                        strokeLinecap="round"
-                    />
-                    {/* Low range - thin path for border */}
-                    <path
-                        className="gauge-arc-border"
-                        d={arcData.lowD}
-                        strokeWidth={arcStrokeWidth}
-                        fill="none"
-                        stroke={options.lowColor}
-                        strokeOpacity="0.3"
-                        strokeLinecap="round"
-                    />
-                </g>
-                
-                <g>
-                    {/* Normal range - wide path for fill */}
-                    <path
-                        className="gauge-arc-fill"
-                        d={arcData.normalD}
-                        strokeWidth={arcStrokeWidth - 2}
-                        fill="none"
-                        stroke="#dcfce7" // Light green fill (green-100)
-                        strokeLinecap="round"
-                    />
-                    {/* Normal range - thin path for border */}
-                    <path
-                        className="gauge-arc-border"
-                        d={arcData.normalD}
-                        strokeWidth={arcStrokeWidth}
-                        fill="none"
-                        stroke={options.normalColor}
-                        strokeOpacity="0.3"
-                        strokeLinecap="round"
-                    />
-                </g>
-                
-                <g>
-                    {/* High range - wide path for fill */}
-                    <path
-                        className="gauge-arc-fill"
-                        d={arcData.highD}
-                        strokeWidth={arcStrokeWidth - 2}
-                        fill="none"
-                        stroke="#fee2e2" // Light red fill (red-100)
-                        strokeLinecap="round"
-                    />
-                    {/* High range - thin path for border */}
-                    <path
-                        className="gauge-arc-border"
-                        d={arcData.highD}
-                        strokeWidth={arcStrokeWidth}
-                        fill="none"
-                        stroke={options.highColor}
-                        strokeOpacity="0.3"
-                        strokeLinecap="round"
-                    />
-                </g>
 
                 {/* Threshold indicators - small triangles */}
                 <polygon 
-                    points={`${labelPositions.thresholdLowPos.x-8},${labelPositions.thresholdLowPos.y+10} ${labelPositions.thresholdLowPos.x},${labelPositions.thresholdLowPos.y-5} ${labelPositions.thresholdLowPos.x+8},${labelPositions.thresholdLowPos.y+10}`} 
+                    points={`${labelPositions.thresholdLowPos.x-8},${labelPositions.thresholdLowPos.y+15} ${labelPositions.thresholdLowPos.x},${labelPositions.thresholdLowPos.y} ${labelPositions.thresholdLowPos.x+8},${labelPositions.thresholdLowPos.y+15}`} 
                     fill="#64748b" 
                     opacity="0.6"
                 />
                 <polygon 
-                    points={`${labelPositions.thresholdHighPos.x-8},${labelPositions.thresholdHighPos.y+10} ${labelPositions.thresholdHighPos.x},${labelPositions.thresholdHighPos.y-5} ${labelPositions.thresholdHighPos.x+8},${labelPositions.thresholdHighPos.y+10}`} 
+                    points={`${labelPositions.thresholdHighPos.x-8},${labelPositions.thresholdHighPos.y+15} ${labelPositions.thresholdHighPos.x},${labelPositions.thresholdHighPos.y} ${labelPositions.thresholdHighPos.x+8},${labelPositions.thresholdHighPos.y+15}`} 
                     fill="#64748b" 
                     opacity="0.6"
                 />
@@ -437,143 +405,119 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                     <line
                         className="gauge-needle"
                         x1={centerX}
-                        y1={centerY + 5}
+                        y1={centerY}
                         x2={centerX}
-                        y2={centerY - radius + (arcStrokeWidth / 2) + 15}
-                        stroke="#475569" // slate-600 for a more subtle needle
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
+                        y2={centerY - radius + (arcStrokeWidth / 2) + 5} // Adjust length to fit inside arc
+                        stroke="black" // Define needle appearance
+                        strokeWidth="3"
+                    // No inline style needed here as rotation is on the group
                     />
-                    {/* Needle base */}
                     <circle
                         className="gauge-needle-base"
                         cx={centerX}
                         cy={centerY}
-                        r="12"
-                        fill="#f8fafc" // slate-50
-                        stroke="#475569" // slate-600
-                        strokeWidth="2"
-                    />
-                    <circle
-                        cx={centerX}
-                        cy={centerY}
-                        r="6"
-                        fill="#94a3b8" // slate-400 for inner circle
+                        r="10"
+                        fill="black" // Define base appearance
                     />
                 </g>
 
-                {/* Min/Max Values with improved positioning */}
+                {/* Labels */}
+                {/* Min/Max Values */}
                 <text
                     className="gauge-label gauge-label-value"
-                    x={centerX - radius - 10}
-                    y={centerY + 35}
-                    textAnchor="middle"
+                    x={centerX - radius - 5} // Adjust position based on radius
+                    y={centerY + 25} // Adjust vertical position
+                    textAnchor="middle" // Usually better for programmatic placement
                     style={textStyle}
-                    fill="#64748b" // Slate-500 for better readability
-                    fontWeight="500"
                 >
                     {options.minValue} {options.unit}
                 </text>
                 <text
                     className="gauge-label gauge-label-value"
-                    x={centerX + radius + 10}
-                    y={centerY + 35}
+                    x={centerX + radius + 5} // Adjust position
+                    y={centerY + 25} // Adjust vertical position
                     textAnchor="middle"
                     style={textStyle}
-                    fill="#64748b" // Slate-500 for better readability
-                    fontWeight="500"
                 >
                     {options.maxValue} {options.unit}
                 </text>
 
-                {/* Threshold Values with better positioning */}
+                {/* Threshold Values */}
                 <text
                     className="gauge-label gauge-label-threshold"
                     x={labelPositions.thresholdLowPos.x}
-                    y={labelPositions.thresholdLowPos.y + 25}
+                    y={labelPositions.thresholdLowPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
-                    fill="#64748b" // Slate-500 for better readability
-                    fontWeight="500"
                 >
-                    {options.lowThreshold}
+                    {options.lowThreshold} {/* Removed unit for less clutter */}
                 </text>
                 <text
                     className="gauge-label gauge-label-threshold"
                     x={labelPositions.thresholdHighPos.x}
-                    y={labelPositions.thresholdHighPos.y + 25}
+                    y={labelPositions.thresholdHighPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
-                    fill="#64748b" // Slate-500 for better readability
-                    fontWeight="500"
                 >
-                    {options.highThreshold}
+                    {options.highThreshold} {/* Removed unit */}
                 </text>
 
-                {/* Range Labels with improved positioning and subtler colors */}
+                {/* Range Labels */}
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeLowPos.x}
-                    y={labelPositions.rangeLowPos.y - 10}
+                    y={labelPositions.rangeLowPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
-                    fill="#ef4444" // Red-500, slightly less vibrant
-                    fontWeight="600"
                 >
                     {options.lowRangeLabel}
                 </text>
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeNormalPos.x}
-                    y={labelPositions.rangeNormalPos.y - 15}
+                    y={labelPositions.rangeNormalPos.y - 10}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
-                    fill="#22c55e" // Green-500, slightly less vibrant
-                    fontWeight="600"
                 >
                     {options.normalRangeLabel}
                 </text>
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeHighPos.x}
-                    y={labelPositions.rangeHighPos.y - 10}
+                    y={labelPositions.rangeHighPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
-                    fill="#ef4444" // Red-500, slightly less vibrant
-                    fontWeight="600"
                 >
                     {options.highRangeLabel}
                 </text>
 
-                {/* Current Value Label with enhanced styling */}
+                {/* Current Value Label */}
                 <text
                     className="gauge-label gauge-label-current"
                     x={centerX}
-                    y={centerY + radius * 0.4 + 10}
+                    y={centerY + radius * 0.4} // Position below center
                     textAnchor="middle"
-                    fontSize="26"
-                    fontWeight="700"
-                    fill="#1e293b" // Slate-800 for better readability
+                    fontSize="24" // Make current value prominent
+                    fontWeight="bold"
+                    fill="#333"
                 >
                     {valueDisplay} {options.unit}
                 </text>
             </svg>
             {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
 
-            {/* Status Badge with subtle styling */}
-            <div className="flex justify-center mt-4">
-                <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-medium ${statusBgClass} shadow-sm`}>
-                    {status}
-                </span>
-            </div>
+            {/* Status Badge */}
+            <span className={`inline-block px-3 py-1 rounded-full text-white text-xs font-semibold mt-2 ${statusBgClass}`}>
+                {status}
+            </span>
 
-            {/* Learn More Button with better positioning */}
-            <div className="mt-4 text-center">
+            {/* Learn More Button */}
+            <div className="mt-4 text-center"> {/* Container for centering */}
                 {infoDialog}
             </div>
         </div>
@@ -582,5 +526,4 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
 
 // --- Remove PropTypes ---
 // Gauge.propTypes = { ... }; // This block is no longer needed
-
 export default Gauge;

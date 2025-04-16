@@ -2,6 +2,7 @@ import { Button } from "@/shared/components/ui/button"
 import { Separator } from "@/shared/components/ui/separator"
 import { SidebarTrigger } from "@/shared/components/ui/sidebar"
 import Link from "next/link"
+import Title from "./site-header-title"
 
 export function SiteHeader() {
   return (
@@ -12,9 +13,7 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <div className="flex items-center gap-2">
-          <h1 className="text-base font-medium">New</h1>
-        </div>
+        <Title />
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden">
             <Link

@@ -1,12 +1,9 @@
 import * as React from "react"
 import { Suspense } from "react"
 import Link from "next/link";
-import { Plus } from "lucide-react";
 
 import { NavDocuments } from "@/shared/components/nav-documents"
 import { NavDocumentsSkeleton } from "@/shared/components/nav-documents-skeleton"
-// import { NavMain } from "@/shared/components/nav-main"
-import { NavSecondary } from "@/shared/components/nav-secondary"
 import { NavUser } from "@/shared/components/nav-user"
 import {
   Sidebar,
@@ -53,18 +50,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <NavDocuments
             title="Reports"
             // reportsPromise={reportsPromise}
-            action={
-              <Link
-                href="/new"
-                className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
-                aria-label="Create new report"
-              >
-                <Plus size={16} />
-              </Link>
-            }
           />
         </Suspense>
-        <NavSecondary className="mt-auto" />
+        <div className="mt-auto">
+        {/* <NavSecondary className="mt-auto" /> */}
+        </div>
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

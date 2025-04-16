@@ -19,12 +19,20 @@ app/ # Main application directory following Next.js App Router structure
     page.tsx # Page for uploading a new report
   sample/
     page.tsx # Page displaying a sample report visualization
+  terms/
+    page.tsx # Displays the Terms of Service
+  privacy/
+    page.tsx # Displays the Privacy Policy
+  hipaa/
+    page.tsx # Displays HIPAA compliance information
   api/
     report-upload/
       signed-url/
         route.ts # API endpoint to generate pre-signed S3 URLs for report uploads
       create-record/
         route.ts # API endpoint to create the report record in DB after successful uploads
+    chat/
+      route.ts # API endpoint to handle chatbot messages using Vercel AI SDK
   globals.css # Global CSS styles
 
 # Public assets
@@ -115,6 +123,12 @@ features/report-upload/components # UI components specific to the report upload 
   - `reports/[id]/page.tsx` - Dynamic page to display a specific report.
 - `layout.tsx` - Root layout for the application.
 - `globals.css` - Global CSS styles.
+- `terms/`
+  - `page.tsx` - Displays the Terms of Service.
+- `privacy/`
+  - `page.tsx` - Displays the Privacy Policy.
+- `hipaa/`
+  - `page.tsx` - Displays HIPAA compliance information.
 
 ## `components/` - Shared UI Components (Consider moving relevant parts to `shared/components/ui` based on rules)
 
@@ -142,6 +156,7 @@ features/report-upload/components # UI components specific to the report upload 
 ## `shared/` - Shared Code (UI Kit, Config, Hooks, Utils)
 - `components/ui/` - Atomic UI components (e.g., from Shadcn).
   - `skeleton.tsx` - The Shadcn Skeleton component.
+  - `Chatbot.tsx`: A floating chatbot component allowing users to ask questions about their report.
 
 ## Configuration Files
 - `package.json` - Project dependencies and scripts.
@@ -171,3 +186,14 @@ entities/report/api/getTestsData.ts - Fetches processed test data for a specific
 entities/report/components/ReportUploader.tsx - Component for uploading medical report files.
 entities/report/components/TestViewer.tsx - Displays various visualizations (gauges, tables) for test results.
 entities/report/components/TestTableGroup.tsx - Renders a table for a specific group of tests (e.g., CBC).
+
+app: Main application directory using Next.js App Router.
+app/(pages)/reports: Pages related to viewing and managing medical reports.
+app/(pages)/reports/[id]/page.tsx: Specific page to display details of a single report, identified by its ID.
+shared: Directory for code shared across different parts of the application, containing no specific business logic.
+shared/components/ui: Reusable, generic UI components (like buttons, inputs, cards).
+shared/components/ui/Chatbot.tsx: A floating chatbot component allowing users to ask questions about their report.
+
+app/api/report-upload/create-record/route.ts # API endpoint to create the report record in DB after successful uploads
+app/api/chat/route.ts # API endpoint to handle chatbot messages using Vercel AI SDK
+app/globals.css # Global CSS styles
