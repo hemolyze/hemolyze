@@ -171,3 +171,10 @@ entities/report/api/getTestsData.ts - Fetches processed test data for a specific
 entities/report/components/ReportUploader.tsx - Component for uploading medical report files.
 entities/report/components/TestViewer.tsx - Displays various visualizations (gauges, tables) for test results.
 entities/report/components/TestTableGroup.tsx - Renders a table for a specific group of tests (e.g., CBC).
+
+app: Main application directory using Next.js App Router.
+app/(pages)/reports: Pages related to viewing and managing medical reports.
+app/(pages)/reports/[id]/page.tsx: Specific page to display details of a single report, identified by its ID.
+shared: Directory for code shared across different parts of the application, containing no specific business logic.
+shared/components/ui: Reusable, generic UI components (like buttons, inputs, cards).
+shared/components/ui/Chatbot.tsx: A floating chatbot component allowing users to ask questions about their report.
