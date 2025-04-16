@@ -2,11 +2,8 @@
 
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import {
-  CreditCard,
   MoreVertical,
   LogOut,
-  Bell,
-  UserCircle,
 } from "lucide-react"
 
 import {
@@ -17,7 +14,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -94,7 +90,7 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <UserCircle />
                 Account
@@ -107,8 +103,7 @@ export function NavUser() {
                 <Bell />
                 Notifications
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            </DropdownMenuGroup> */}
             <SignOutButton>
               <DropdownMenuItem>
                 <LogOut />

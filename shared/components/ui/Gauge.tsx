@@ -318,10 +318,11 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
 
             {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
             <svg
-                className="gauge-svg-container"
-                width="400"
-                height="280"
+                className="gauge-svg-container w-full h-auto"
+                width="100%"
+                height="100%"
                 viewBox="0 0 400 280"
+                preserveAspectRatio="xMidYMid meet"
                 // Add accessibility attributes
                 role="meter"
                 aria-valuemin={options.minValue}
@@ -337,85 +338,41 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                     d={describeArc(centerX, centerY, radius, startAngle, endAngle)}
                     strokeWidth={arcStrokeWidth}
                     fill="none"
-                    stroke="#f1f5f9" // Slate-100 for subtle background
+                />
+                <path
+                    className="gauge-arc gauge-arc-high"
+                    d={arcData.highD}
+                    style={highArcStyle}
+                    strokeWidth={arcStrokeWidth}
+                    fill="none"
+                />
+
+                {/* Caps */}
+                <path
+                    className="gauge-arc-cap"
+                    d={arcData.capStartD}
+                    style={capStartStyle}
+                    strokeWidth={arcStrokeWidth}
+                    fill="none"
+                    strokeLinecap="round" // Use round caps for better appearance
+                />
+                <path
+                    className="gauge-arc-cap"
+                    d={arcData.capEndD}
+                    style={capEndStyle}
+                    strokeWidth={arcStrokeWidth}
+                    fill="none"
                     strokeLinecap="round"
                 />
-                
-                {/* Create filled arcs with borders */}
-                <g>
-                    {/* Low range - wide path for fill */}
-                    <path
-                        className="gauge-arc-fill"
-                        d={arcData.lowD}
-                        strokeWidth={arcStrokeWidth - 2}
-                        fill="none"
-                        stroke="#fee2e2" // Light red fill (red-100)
-                        strokeLinecap="round"
-                    />
-                    {/* Low range - thin path for border */}
-                    <path
-                        className="gauge-arc-border"
-                        d={arcData.lowD}
-                        strokeWidth={arcStrokeWidth}
-                        fill="none"
-                        stroke={options.lowColor}
-                        strokeOpacity="0.3"
-                        strokeLinecap="round"
-                    />
-                </g>
-                
-                <g>
-                    {/* Normal range - wide path for fill */}
-                    <path
-                        className="gauge-arc-fill"
-                        d={arcData.normalD}
-                        strokeWidth={arcStrokeWidth - 2}
-                        fill="none"
-                        stroke="#dcfce7" // Light green fill (green-100)
-                        strokeLinecap="round"
-                    />
-                    {/* Normal range - thin path for border */}
-                    <path
-                        className="gauge-arc-border"
-                        d={arcData.normalD}
-                        strokeWidth={arcStrokeWidth}
-                        fill="none"
-                        stroke={options.normalColor}
-                        strokeOpacity="0.3"
-                        strokeLinecap="round"
-                    />
-                </g>
-                
-                <g>
-                    {/* High range - wide path for fill */}
-                    <path
-                        className="gauge-arc-fill"
-                        d={arcData.highD}
-                        strokeWidth={arcStrokeWidth - 2}
-                        fill="none"
-                        stroke="#fee2e2" // Light red fill (red-100)
-                        strokeLinecap="round"
-                    />
-                    {/* High range - thin path for border */}
-                    <path
-                        className="gauge-arc-border"
-                        d={arcData.highD}
-                        strokeWidth={arcStrokeWidth}
-                        fill="none"
-                        stroke={options.highColor}
-                        strokeOpacity="0.3"
-                        strokeLinecap="round"
-                    />
-                </g>
 
                 {/* Threshold indicators - small triangles */}
                 <polygon 
-                    points={`${labelPositions.thresholdLowPos.x-8},${labelPositions.thresholdLowPos.y+10} ${labelPositions.thresholdLowPos.x},${labelPositions.thresholdLowPos.y-5} ${labelPositions.thresholdLowPos.x+8},${labelPositions.thresholdLowPos.y+10}`} 
+                    points={`${labelPositions.thresholdLowPos.x-8},${labelPositions.thresholdLowPos.y+15} ${labelPositions.thresholdLowPos.x},${labelPositions.thresholdLowPos.y} ${labelPositions.thresholdLowPos.x+8},${labelPositions.thresholdLowPos.y+15}`} 
                     fill="#64748b" 
                     opacity="0.6"
                 />
                 <polygon 
-                    points={`${labelPositions.thresholdHighPos.x-8},${labelPositions.thresholdHighPos.y+10} ${labelPositions.thresholdHighPos.x},${labelPositions.thresholdHighPos.y-5} ${labelPositions.thresholdHighPos.x+8},${labelPositions.thresholdHighPos.y+10}`} 
+                    points={`${labelPositions.thresholdHighPos.x-8},${labelPositions.thresholdHighPos.y+15} ${labelPositions.thresholdHighPos.x},${labelPositions.thresholdHighPos.y} ${labelPositions.thresholdHighPos.x+8},${labelPositions.thresholdHighPos.y+15}`} 
                     fill="#64748b" 
                     opacity="0.6"
                 />
@@ -490,7 +447,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-threshold"
                     x={labelPositions.thresholdLowPos.x}
-                    y={labelPositions.thresholdLowPos.y + 25}
+                    y={labelPositions.thresholdLowPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
@@ -502,7 +459,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-threshold"
                     x={labelPositions.thresholdHighPos.x}
-                    y={labelPositions.thresholdHighPos.y + 25}
+                    y={labelPositions.thresholdHighPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
@@ -516,7 +473,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeLowPos.x}
-                    y={labelPositions.rangeLowPos.y - 10}
+                    y={labelPositions.rangeLowPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
@@ -528,7 +485,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeNormalPos.x}
-                    y={labelPositions.rangeNormalPos.y - 15}
+                    y={labelPositions.rangeNormalPos.y - 10}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
@@ -540,7 +497,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeHighPos.x}
-                    y={labelPositions.rangeHighPos.y - 10}
+                    y={labelPositions.rangeHighPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
