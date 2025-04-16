@@ -3,8 +3,6 @@
 import * as React from "react";
 import {
   MoreHorizontal,
-  Folder,
-  Share,
   Trash2,
   FileText,
 } from "lucide-react";
@@ -13,7 +11,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
@@ -66,7 +63,7 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuAction
                     showOnHover
-                    className="data-[state=open]:bg-accent rounded-sm"
+                    className="data-[state=open]:bg-accent rounded-sm cursor-pointer"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">More options for {item.name}</span>
@@ -78,15 +75,6 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
                   align={isMobile ? "end" : "start"}
                   sideOffset={5}
                 >
-                  <DropdownMenuItem>
-                    <Folder className="mr-2 h-4 w-4" />
-                    <span>View</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Share className="mr-2 h-4 w-4" />
-                    <span>Share</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20">
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Delete</span>
