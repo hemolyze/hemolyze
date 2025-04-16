@@ -1,4 +1,5 @@
 'use client'; // Clerk components require client-side interaction
+import Link from "next/link";
 import {
     SignInButton,
     SignUpButton,
