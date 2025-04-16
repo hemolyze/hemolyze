@@ -1,14 +1,68 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/shared/components/ui/button'; // Assuming Button component exists
-import { Input } from '@/shared/components/ui/input'; // Assuming Input component exists
-import { MessageSquare, X } from 'lucide-react'; // Using lucide-react for icons
+import { useState, useRef, useEffect } from 'react';
+import { useChat, type Message } from '@ai-sdk/react';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { BloodTestsData } from '@/lib/models/Report'; // Import the type for testsData
 
-export default function Chatbot() {
+// Define the type for the richer report context passed from the parent
+interface ReportChatContext {
+  metadata: {
+    patientName?: string | null;
+    patientAge?: string | null;
+    patientSex?: string | null;
+    referringDoctor?: string | null;
+    labName?: string | null;
+    sampleDate?: string | null;
+    reportDate?: string | null;
+    labDirector?: string | null;
+    labContact?: string | null;
+  };
+  testsData?: BloodTestsData | null; // Include the structured tests data
+}
+
+// Define props for the Chatbot component
+interface ChatbotProps {
+  reportContext: ReportChatContext | null;
+}
+
+export default function Chatbot({ reportContext }: ChatbotProps) { // Accept richer context prop
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Pass reportContext in the body to the useChat hook
+  const { 
+    messages, 
+    input, 
+    handleInputChange, 
+    handleSubmit, 
+    isLoading, 
+    setMessages 
+  } = useChat({
+    body: { // Send the richer context
+      reportContext,
+    }
+  }); 
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const toggleChat = () => setIsOpen(!isOpen);
+
+  // Function to clear chat messages
+  const clearChat = () => {
+    setMessages([]);
+  };
+
+  // Scroll to bottom of messages when new message appears or chat opens
+  useEffect(() => {
+    if (isOpen && messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    } else if (isOpen && messages.length === 0) {
+      // Optional: handle scrolling when chat is opened but empty
+    }
+  }, [messages, isOpen]);
 
   return (
     <>
@@ -27,31 +81,62 @@ export default function Chatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-80 h-[450px] bg-card border border-border rounded-lg shadow-xl flex flex-col z-50 overflow-hidden">
+        // Responsive classes: Full screen on mobile, floating on md+ screens
+        <div className="fixed inset-x-0 bottom-0 h-[85vh] bg-card border-t border-border 
+                        md:inset-auto md:bottom-6 md:right-6 md:h-[550px] md:w-96 
+                        md:border md:rounded-lg shadow-xl flex flex-col z-50 overflow-hidden">
           {/* Header */}
           <div className="flex justify-between items-center p-3 border-b bg-muted/40">
             <h3 className="font-semibold text-sm">Ask Hemolyze</h3>
-            <Button variant="ghost" size="icon" onClick={toggleChat} className="h-7 w-7">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close chat</span>
-            </Button>
+            <div className="flex items-center gap-1">
+              {/* Clear Chat Button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={clearChat} 
+                className="h-7 w-7" 
+                disabled={messages.length === 0 || isLoading}
+                aria-label="Clear chat"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              {/* Close Chat Button */}
+              <Button variant="ghost" size="icon" onClick={toggleChat} className="h-7 w-7">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close chat</span>
+              </Button>
+            </div>
           </div>
 
-          {/* Message Area (Placeholder) */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-sm text-muted-foreground">Ask me anything about your report...</p>
-            {/* Messages will go here */}
-          </div>
+          {/* Message Area */}
+          <ScrollArea className="flex-1 p-4 overflow-y-auto">
+            {messages.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center">Ask me anything about your report...</p>
+            )}
+            {messages.map((m: Message) => (
+              <div key={m.id} className={`mb-3 text-sm ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
+                <span className={`inline-block px-3 py-1.5 rounded-lg ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                  {m.content}
+                </span>
+              </div>
+            ))}
+            <div ref={messagesEndRef} /> {/* Element to scroll to */}
+          </ScrollArea>
 
-          {/* Input Area */}
-          <div className="p-3 border-t">
+          {/* Input Area */}          
+          <form onSubmit={handleSubmit} className="p-3 border-t flex items-center gap-2">
             <Input
-              type="text"
+              value={input}
+              onChange={handleInputChange}
               placeholder="Type your question..."
-              className="w-full"
-              // Add state and handlers for input later
+              className="flex-1"
+              disabled={isLoading}
             />
-          </div>
+            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send message</span>
+            </Button>
+          </form>
         </div>
       )}
     </>

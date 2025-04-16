@@ -25,6 +25,8 @@ app/ # Main application directory following Next.js App Router structure
         route.ts # API endpoint to generate pre-signed S3 URLs for report uploads
       create-record/
         route.ts # API endpoint to create the report record in DB after successful uploads
+    chat/
+      route.ts # API endpoint to handle chatbot messages using Vercel AI SDK
   globals.css # Global CSS styles
 
 # Public assets
@@ -178,3 +180,7 @@ app/(pages)/reports/[id]/page.tsx: Specific page to display details of a single 
 shared: Directory for code shared across different parts of the application, containing no specific business logic.
 shared/components/ui: Reusable, generic UI components (like buttons, inputs, cards).
 shared/components/ui/Chatbot.tsx: A floating chatbot component allowing users to ask questions about their report.
+
+app/api/report-upload/create-record/route.ts # API endpoint to create the report record in DB after successful uploads
+app/api/chat/route.ts # API endpoint to handle chatbot messages using Vercel AI SDK
+app/globals.css # Global CSS styles
