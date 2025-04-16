@@ -135,7 +135,7 @@ export default async function TestViewer({ id }: { id: string }) {
                             <h3 className="text-lg font-semibold text-gray-700">Detailed Test Results</h3>
                             <div className="ml-2 h-px bg-gray-200 flex-grow"></div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                        <div className="grid grid-cols-1 gap-6 w-full">
                             {testData.table.map(table => (
                                 // @ts-expect-error - improve type inference
                                 <TestTableGroup key={table.group} group={table.group} tests={table.tests} reportId={id} />
