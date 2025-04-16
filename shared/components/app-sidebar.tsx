@@ -1,7 +1,6 @@
 import * as React from "react"
 import { Suspense } from "react"
 import Link from "next/link";
-import { Plus } from "lucide-react";
 
 import { NavDocuments } from "@/shared/components/nav-documents"
 import { NavDocumentsSkeleton } from "@/shared/components/nav-documents-skeleton"
@@ -51,15 +50,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <NavDocuments
             title="Reports"
             // reportsPromise={reportsPromise}
-            action={
-              <Link
-                href="/new"
-                className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
-                aria-label="Create new report"
-              >
-                <Plus size={16} />
-              </Link>
-            }
           />
         </Suspense>
         <div className="mt-auto">

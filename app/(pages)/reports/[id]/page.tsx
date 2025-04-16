@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import MetadataViewerSkeleton from "@/entities/report/components/MetadataViewerSkeleton";
 import TestViewerSkeleton from '@/entities/report/components/TestViewerSkeleton';
 import Chatbot from '@/shared/components/ui/Chatbot';
-import { connect, disconnect } from "@/lib/db";
+import { connect } from "@/lib/db";
 import Report, { IReport, BloodTestsData } from "@/lib/models/Report"; // Import relevant types
 import { notFound } from 'next/navigation';
 
@@ -63,8 +63,6 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   } catch (error) {
     console.error("Error fetching report data:", error);
     reportFound = false; 
-  } finally {
-    await disconnect();
   }
 
   if (!reportFound) {
@@ -82,7 +80,7 @@ async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
         </Suspense>
       </div>
       {/* Pass the richer report context to Chatbot */}
-      <Chatbot reportContext={reportContext} />
+      <Chatbot reportContext={JSON.stringify(reportContext)} />
     </div>
   )
 }

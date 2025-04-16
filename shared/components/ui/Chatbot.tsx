@@ -26,26 +26,27 @@ interface ReportChatContext {
 
 // Define props for the Chatbot component
 interface ChatbotProps {
-  reportContext: ReportChatContext | null;
+  reportContext: ReportChatContext | null | string;
 }
 
-export default function Chatbot({ reportContext }: ChatbotProps) { // Accept richer context prop
+export default function Chatbot({ reportContext: reportContextString }: ChatbotProps) { // Accept richer context prop
+  const reportContext = JSON.parse(reportContextString as unknown as string);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Pass reportContext in the body to the useChat hook
-  const { 
-    messages, 
-    input, 
-    handleInputChange, 
-    handleSubmit, 
-    isLoading, 
-    setMessages 
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    setMessages
   } = useChat({
     body: { // Send the richer context
       reportContext,
     }
-  }); 
-  
+  });
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const toggleChat = () => setIsOpen(!isOpen);
@@ -90,11 +91,11 @@ export default function Chatbot({ reportContext }: ChatbotProps) { // Accept ric
             <h3 className="font-semibold text-sm">Ask Hemolyze</h3>
             <div className="flex items-center gap-1">
               {/* Clear Chat Button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={clearChat} 
-                className="h-7 w-7" 
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearChat}
+                className="h-7 w-7"
                 disabled={messages.length === 0 || isLoading}
                 aria-label="Clear chat"
               >
@@ -123,7 +124,7 @@ export default function Chatbot({ reportContext }: ChatbotProps) { // Accept ric
             <div ref={messagesEndRef} /> {/* Element to scroll to */}
           </ScrollArea>
 
-          {/* Input Area */}          
+          {/* Input Area */}
           <form onSubmit={handleSubmit} className="p-3 border-t flex items-center gap-2">
             <Input
               value={input}

@@ -6,6 +6,7 @@ import {
   Trash2,
   FileText,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ import {
 } from "@/shared/components/ui/sidebar";
 import { NavLink } from "./ui/NavLink";
 import { deleteReportAction } from "@/entities/report/api/actions";
+import Link from "next/link";
 
 // Type for report items (can be shared or redefined if needed)
 interface SidebarReportItem {
@@ -56,7 +58,7 @@ export interface NavDocumentsContentProps {
 }
 
 // The actual Client Component
-export function NavDocumentsContent({ title, items, action }: NavDocumentsContentProps) {
+export function NavDocumentsContent({ title, items }: NavDocumentsContentProps) {
   const { isMobile } = useSidebar();
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -87,7 +89,13 @@ export function NavDocumentsContent({ title, items, action }: NavDocumentsConten
     <SidebarGroup className="group-data-[collapsible=icon]:hidden flex flex-col flex-1 overflow-hidden">
       <div className="flex items-center justify-between">
         <SidebarGroupLabel>{title}</SidebarGroupLabel>
-        {action}
+        <Link
+          href="/new"
+          className="inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
+          aria-label="Create new report"
+        >
+          <Plus size={16} />
+        </Link>
       </div>
       {items.length > 0 ? (
         <InnerSidebarMenu className="flex flex-col gap-1 overflow-y-auto flex-1 pr-2">

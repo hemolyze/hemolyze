@@ -21,13 +21,12 @@ interface NavDocumentsProps {
 // Outer Async Server Component fetches data and renders the Client Component
 export async function NavDocuments({
   title,
-  action,
 }: NavDocumentsProps) {
   // Call the imported fetch function
   const items = await getReportsForSidebar()
 
   // Render the Client Component, passing fetched data as props
   return (
-    <NavDocumentsContent title={title} items={items} action={action} />
+    <NavDocumentsContent title={title} items={items} />
   )
 }
