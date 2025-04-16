@@ -185,6 +185,9 @@ export default function Home() {
             <p>&copy; {new Date().getFullYear()} Hemolyze. All rights reserved.</p>
             <div className="flex gap-4 mt-4 sm:mt-0">
               <Link href="https://github.com/hemolyze/hemolyze" className="hover:text-white">Github</Link>
+              <Link href="/terms" className="hover:text-white">Terms</Link>
+              <Link href="/privacy" className="hover:text-white">Privacy</Link>
+              <Link href="/hipaa" className="hover:text-white">HIPAA</Link>
             </div>
           </div>
         </footer>
