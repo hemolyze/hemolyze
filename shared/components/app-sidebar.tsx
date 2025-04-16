@@ -5,8 +5,6 @@ import { Plus } from "lucide-react";
 
 import { NavDocuments } from "@/shared/components/nav-documents"
 import { NavDocumentsSkeleton } from "@/shared/components/nav-documents-skeleton"
-// import { NavMain } from "@/shared/components/nav-main"
-import { NavSecondary } from "@/shared/components/nav-secondary"
 import { NavUser } from "@/shared/components/nav-user"
 import {
   Sidebar,
@@ -64,7 +62,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             }
           />
         </Suspense>
-        <NavSecondary className="mt-auto" />
+        <div className="mt-auto">
+        {/* <NavSecondary className="mt-auto" /> */}
+        </div>
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
