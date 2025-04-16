@@ -342,7 +342,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <path
                     className="gauge-arc gauge-arc-high"
                     d={arcData.highD}
-                    style={highArcStyle}
+                    // style={highArcStyle}
                     strokeWidth={arcStrokeWidth}
                     fill="none"
                 />
@@ -351,7 +351,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <path
                     className="gauge-arc-cap"
                     d={arcData.capStartD}
-                    style={capStartStyle}
+                    // style={capStartStyle}
                     strokeWidth={arcStrokeWidth}
                     fill="none"
                     strokeLinecap="round" // Use round caps for better appearance
@@ -359,7 +359,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <path
                     className="gauge-arc-cap"
                     d={arcData.capEndD}
-                    style={capEndStyle}
+                    // style={capEndStyle}
                     strokeWidth={arcStrokeWidth}
                     fill="none"
                     strokeLinecap="round"
