@@ -34,6 +34,12 @@ export default function Home() {
               <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                 <ShieldCheck size={14} /> End-to-end encrypted & HIPAA compliant options available.
               </p>
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+              Read our <Link href="/terms" className="text-blue-500 hover:underline">Terms of service</Link> 
+              and 
+              <Link href="/privacy" className="text-blue-500 hover:underline">Privacy Policy</Link> 
+              for more information.
+              </p>
             </div>
 
             {/* Right Column - Image Placeholder */}
