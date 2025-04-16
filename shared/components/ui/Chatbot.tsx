@@ -7,6 +7,8 @@ import { Input } from '@/shared/components/ui/input';
 import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { BloodTestsData } from '@/lib/models/Report'; // Import the type for testsData
+import { Markdown } from './markdown';
+import { cn } from '@/shared/lib/utils';
 
 // Define the type for the richer report context passed from the parent
 interface ReportChatContext {
@@ -116,9 +118,11 @@ export default function Chatbot({ reportContext: reportContextString }: ChatbotP
             )}
             {messages.map((m: Message) => (
               <div key={m.id} className={`mb-3 text-sm ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                <span className={`inline-block px-3 py-1.5 rounded-lg ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                  {m.content}
-                </span>
+                <div className={cn(
+                  m.role === 'user' ? 'ml-auto rounded-lg p-2 w-fit bg-accent rounded-br-none shadow' : 'bg-transparent',
+                )}>
+                  <Markdown content={m.content} />
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} /> {/* Element to scroll to */}
