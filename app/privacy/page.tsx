@@ -1,6 +1,5 @@
 import { Header } from "@/shared/components/layout/Header";
 import Link from "next/link";
-import { Info } from 'lucide-react';
 
 export default function PrivacyPage() {
   return (
