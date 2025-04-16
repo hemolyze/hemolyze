@@ -478,7 +478,7 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 <text
                     className="gauge-label gauge-label-range"
                     x={labelPositions.rangeNormalPos.x}
-                    y={labelPositions.rangeNormalPos.y - 25}
+                    y={labelPositions.rangeNormalPos.y - 10}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
