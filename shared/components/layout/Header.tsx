@@ -1,4 +1,5 @@
 'use client'; // Clerk components require client-side interaction
+import Link from 'next/link';
 import {
     SignInButton,
     SignUpButton,
@@ -25,7 +26,7 @@ export function Header() {
     return (
         <header className="sticky top-0 z-50 w-full border-border/40 backdrop-blur supports-[backdrop-filter]:bg-transparent">
             <div className="w-full max-w-6xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-0">
-                <Logo />
+                <Link href="/"><Logo /></Link>
                 <nav className="flex items-center space-x-4 md:space-x-6">
                     <SignedOut>
                         <SignInButton>
