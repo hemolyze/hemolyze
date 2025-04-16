@@ -4,6 +4,7 @@ import Report, { IReport } from "@/lib/models/Report";
 import { connect } from "@/lib/db";
 
 interface SidebarReportItem {
+  id: string;
   name: string;
   url: string;
   status: IReport["overallStatus"];
@@ -37,10 +38,11 @@ export async function getReportsForSidebar(): Promise<SidebarReportItem[]> {
       >();
 
     // console.log(`getReportsForSidebar (in entities): Found ${reports.length} reports for user ${userId}.`);
-
+    // @ts-expect-error - Improve types
     const formattedReports: SidebarReportItem[] = reports.map((report) => {
       const displayName = report.title || `Report ${report._id.toString()}`;
       return {
+        id: report._id,
         name: displayName,
         url: `/reports/${report._id.toString()}`,
         status: report.overallStatus,
