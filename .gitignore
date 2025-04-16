@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.cursorrules
+.cursor-architecture
+
+# clerk configuration (can include secrets)
+/.clerk/
+.cursor/rules/cursorrules.mdc
+.cursor/rules/project-architecture.mdc
+.cursor/rules/project-details.mdc
+
+bun.lock

@@ -1,0 +1,122 @@
+/* src/Gauge.css */
+.gauge-meter-container {
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  box-sizing: border-box;
+  margin-bottom: 30px; /* Add margin between multiple gauges */
+}
+
+.gauge-meter-container h1 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  color: #333;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.gauge-svg-container {
+  display: block;
+  margin: auto;
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  overflow: visible; /* Ensure labels outside main arc area are visible */
+}
+
+.gauge-arc {
+  fill: none;
+  stroke-width: 30;
+  stroke-linecap: butt;
+}
+
+/* Colors are now set via inline styles in the component based on props */
+
+.gauge-arc-cap {
+  fill: none;
+  /* stroke is set dynamically */
+  stroke-width: 30;
+  stroke-linecap: round;
+}
+
+.gauge-needle {
+  stroke: #333;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transform-origin: 200px 200px; /* Origin relative to SVG viewBox */
+  transition: transform 0.5s ease-in-out;
+}
+
+.gauge-needle-base {
+  fill: #333;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.gauge-label {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  fill: #555;
+  font-weight: 500;
+  font-size: 13px; /* Base size, can be overridden by props */
+  dominant-baseline: middle; /* Better vertical alignment */
+  text-anchor: middle; /* Default anchor, override as needed */
+}
+.gauge-label-value {
+  fill: #777;
+}
+.gauge-label-threshold {
+  fill: #444;
+  font-weight: 500;
+}
+.gauge-label-range {
+  font-size: 15px;
+  font-weight: 600;
+  fill: #333;
+}
+.gauge-label-current {
+  font-size: 22px;
+  font-weight: 700;
+  fill: #000;
+}
+
+.gauge-controls {
+  margin-top: 25px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.gauge-controls label {
+  font-size: 14px;
+  color: #555;
+}
+.gauge-controls input {
+  padding: 8px;
+  width: 60px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+.gauge-controls button {
+  padding: 8px 18px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+.gauge-controls button:hover {
+  background-color: #0056b3;
+}
+
+.gauge-status-text {
+  margin-top: 15px;
+  font-weight: 600;
+  font-size: 16px;
+}

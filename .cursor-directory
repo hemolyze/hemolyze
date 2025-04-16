@@ -1,0 +1,173 @@
+# Root directory layout and configuration
+next.config.mjs # Next.js configuration file
+package.json # Project dependencies and scripts
+tsconfig.json # TypeScript configuration
+postcss.config.mjs # PostCSS configuration (often for TailwindCSS)
+tailwind.config.ts # Tailwind CSS configuration
+README.md # Project overview and instructions
+.gitignore # Specifies intentionally untracked files that Git should ignore
+.eslintrc.json # ESLint configuration for code linting
+.cursor-architecture # Defines the project's architectural rules and guidelines
+.cursor-directory # This file: describes the directory structure
+.cursorrules # Custom instructions for the AI assistant
+
+# Application source code
+app/ # Main application directory following Next.js App Router structure
+  layout.tsx # Root layout for the application
+  page.tsx # Landing/Home page
+  new/
+    page.tsx # Page for uploading a new report
+  sample/
+    page.tsx # Page displaying a sample report visualization
+  api/
+    report-upload/
+      signed-url/
+        route.ts # API endpoint to generate pre-signed S3 URLs for report uploads
+      create-record/
+        route.ts # API endpoint to create the report record in DB after successful uploads
+  globals.css # Global CSS styles
+
+# Public assets
+public/ # Static assets served directly
+  next.svg # Next.js logo
+  vercel.svg # Vercel logo
+
+# Library code (low-level, foundational)
+lib/ # Contains utility functions, external service integrations etc.
+  db.ts # MongoDB connection utility (connect, disconnect, isConnected)
+  models/ # Database schemas (Mongoose Models)
+    Report.ts # Mongoose schema and model definition for medical reports
+
+# Shared code (reusable across features/entities, no business logic)
+shared/ # Reusable components, hooks, types, constants etc.
+  # Example: components/ui/ (UI primitives like Button, Input)
+  # Example: hooks/ (generic React hooks)
+  # Example: lib/ or utils/ (generic helper functions)
+  lib/ # Shared, low-level utility libraries
+    aws/ # AWS related utilities
+      s3.ts # Singleton S3 client generator
+    ai/ # AI related utilities
+      anthropic.ts # Singleton Anthropic client generator
+  components/
+    layout/
+      Header.tsx # Common site header component with logo, navigation, and auth controls
+    ui/
+      button.tsx # Standard button component
+      skeleton.tsx # Placeholder skeleton loader component
+      dropdown-menu.tsx # Primitives for dropdown menus
+      Gauge.tsx # Displays a single value on a gauge meter with thresholds
+      RangeBar.tsx # Displays a value on a horizontal bar relative to a reference range
+      table.tsx # Shadcn UI Table components
+    app-sidebar.tsx: The main application sidebar component, displays navigation, wraps NavDocuments in Suspense.
+    nav-documents.tsx: Async Server Component wrapper that fetches report data and renders NavDocumentsContent.
+    nav-documents-content.tsx: Client Component ('use client') responsible for rendering the report list UI and handling interactions (e.g., dropdown menu, hooks).
+    nav-documents-skeleton.tsx: Skeleton loader fallback for the NavDocuments component.
+    nav-secondary.tsx: Component for secondary navigation items
+    nav-user.tsx: Component displaying user information or actions in the sidebar footer
+    ui: Atomic UI kit components (e.g., Sidebar primitives)
+      sidebar.tsx: Primitives for building the sidebar structure
+    utils/
+      PrefetchNewPage.tsx # Client component to prefetch a route on mount, used for optimization.
+  report: Represents the medical report entity
+    api: Holds API-related logic for reports (fetching, mutations).
+      queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      actions.ts: Server actions related to report entities (e.g., retrieving specific test details).
+      getMetadata.ts # Fetches/processes metadata for a specific report.
+      getTestsData.ts # Fetches/processes structured test results for a specific report.
+    lib: Holds library/utility functions specific to the report entity.
+      generateSignedUrls.ts # Generates S3 signed URLs for report files.
+      fetchFileContents.ts # Fetches content of report files from signed URLs.
+
+# Feature-specific modules
+features/ # Contains self-contained feature modules
+  # Example: auth/ (authentication feature)
+  # Example: product-search/
+
+# Core business entity modules
+entities/ # Represents core business entities
+  # Example: user/
+  # Example: product/
+  report: Represents the medical report entity
+    api: Holds API-related logic for reports (fetching, mutations).
+      queries.ts: Functions for querying report data (e.g., getReportsForSidebar).
+      actions.ts: Server actions related to report entities.
+      getMetadata.ts # Fetches/processes metadata for a specific report.
+      getTestsData.ts # Fetches/processes structured test results for a specific report.
+    lib: Holds library/utility functions specific to the report entity.
+
+# Added features directory
+features/report-upload # Contains self-contained modules for specific business features (e.g., auth, report-upload)
+  # Example: components/ (UI components specific to the report upload feature)
+
+# Added report-upload feature directory
+features/report-upload/components # UI components specific to the report upload feature
+  FileUploadCard.tsx # Client component handling file selection, drag-and-drop, and upload progress display
+
+# Architecture Guide (`project-architecture.mdc`)
+# Project Details (`project-details.mdc`)
+
+---
+
+# Directories & Files
+
+## `app/` - Application Routes & Core Layout
+- `(pages)/` - Contains different page routes.
+  - `reports/[id]/page.tsx` - Dynamic page to display a specific report.
+- `layout.tsx` - Root layout for the application.
+- `globals.css` - Global CSS styles.
+
+## `components/` - Shared UI Components (Consider moving relevant parts to `shared/components/ui` based on rules)
+
+## `features/` - Self-contained Feature Modules
+- `MetadataViewer.tsx` - Component to display the metadata section of a report.
+- `MetadataViewerSkeleton.tsx` - Skeleton loading state for the MetadataViewer component.
+- `TestViewer.tsx` - Component to display the test results section of a report. (Placeholder/Needs Implementation)
+
+## `entities/` - Core Business Entities
+- `report/` - Represents the report entity.
+  - `api/` - API functions related to reports.
+    - `actions.ts` - Server actions related to report entities.
+    - `getMetadata.ts` - Function to fetch report metadata.
+    - `getTestsData.ts` - Function to fetch report test results.
+  - `components/` - UI components specific to the report entity.
+    - `TestInfoDialog.tsx` - Dialog component to show detailed info about a test.
+  - `types/` - TypeScript types/interfaces for reports.
+    - `index.ts` - Defines the structure for report metadata and test results.
+
+## `lib/` - Low-level Libraries & Utilities
+- `db.ts` - Database connection logic (MongoDB).
+- `models/` - Database models (Mongoose Schemas).
+  - `report.ts` - Mongoose schema and model for the `Report` collection.
+
+## `shared/` - Shared Code (UI Kit, Config, Hooks, Utils)
+- `components/ui/` - Atomic UI components (e.g., from Shadcn).
+  - `skeleton.tsx` - The Shadcn Skeleton component.
+
+## Configuration Files
+- `package.json` - Project dependencies and scripts.
+- `tailwind.config.ts` - Tailwind CSS configuration.
+- `tsconfig.json` - TypeScript configuration.
+- `next.config.mjs` - Next.js configuration.
+- `.env.local.example` - Example environment variables.
+- `.gitignore` - Specifies intentionally untracked files that Git should ignore.
+- `.eslintrc.json` - ESLint configuration for code linting.
+- `postcss.config.js` - PostCSS configuration.
+- `components.json` - Shadcn UI configuration.
+
+---
+
+# Notes
+- Adhere to the import rules defined in `project-architecture.mdc`.
+- Place new components/features/entities in their designated directories.
+- Update this file when adding significant new files or directories.
+
+shared/components/ui/GaugeSkeleton.tsx:
+  # Represents the loading state for a single Gauge component.
+
+entities/report/components/TestViewerSkeleton.tsx:
+  # Displays a grid of GaugeSkeleton components as a loading placeholder for TestViewer.
+
+entities/report/api/getTestsData.ts - Fetches processed test data for a specific report.
+entities/report/components/ReportUploader.tsx - Component for uploading medical report files.
+entities/report/components/TestViewer.tsx - Displays various visualizations (gauges, tables) for test results.
+entities/report/components/TestTableGroup.tsx - Renders a table for a specific group of tests (e.g., CBC).
