@@ -74,7 +74,7 @@ export default function Chatbot({ reportContext: reportContextString }: ChatbotP
         <Button
           variant="outline"
           size="icon"
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg z-50 bg-primary text-primary-foreground hover:bg-primary/90"
+          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg z-50 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 dark:text-primary-foreground dark:hover:bg-primary/90"
           onClick={toggleChat}
           aria-label="Open chat"
         >

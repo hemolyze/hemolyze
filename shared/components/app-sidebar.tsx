@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar"
+import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 // import { getReportsForSidebar } from "@/entities/report/api/queries"
 
 const Logo = () => (
@@ -56,7 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavSecondary className="mt-auto" /> */}
         </div>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="flex flex-col gap-2 items-stretch">
+          <ThemeToggle />
         <NavUser />
       </SidebarFooter>
     </Sidebar>
