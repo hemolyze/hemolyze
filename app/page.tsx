@@ -3,10 +3,11 @@ import { Button } from "@/shared/components/ui/button"; // Assuming Button compo
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion"; // Assuming Accordion exists
 import Link from "next/link";
 import { ShieldCheck, BarChart3, Eye, Activity, UserCheck, Info } from 'lucide-react'; // Example icons
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className="flex flex-col w-full">
       <Header />
       {/* Hero Section */}
       <main className="flex flex-col items-center bg-background text-gray-900 w-full">
@@ -37,14 +38,13 @@ export default function Home() {
             </div>
 
             {/* Right Column - Image Placeholder */}
-            <div className="relative flex items-center justify-center aspect-square md:aspect-[3/4] bg-gradient-to-br from-blue-50 via-white to-cyan-50 rounded-lg overflow-hidden shadow-lg">
-              {/* Placeholder for the phone mock-up image */}
-              <div className="text-center p-8">
-                <BarChart3 size={64} className="text-blue-500 mx-auto mb-4" />
-                <p className="text-gray-500 text-sm font-medium">Visual Health Dashboard</p>
-                <p className="mt-2 text-xs text-gray-400">Clear graphs replace confusing numbers.</p>
-              </div>
-              {/* Replace with <Image> component later */}
+            {/* <div className="relative flex items-center justify-center aspect-square bg-white rounded-lg overflow-hidden border">
+            </div> */}
+            <div className="relative flex justify-center items-center flex-col gap-4 md:min-w-1/2 h-[50vh] md:h-auto overflow-hidden md:overflow-visible">
+              <Image src="/images/1.webp" alt="Gauges" className="w-1/2 top-0 left-0" width={1000} height={1000} />
+              <Image src="/images/2.webp" alt="Gauges" className="w-1/2 absolute top-[4rem] left-[-7rem]" width={1000} height={1000} />
+              <Image src="/images/3.webp" alt="Gauges" className="w-1/2 absolute top-[20rem] left[0rem]" width={1000} height={1000} />
+              <Image src="/images/4.webp" alt="Gauges" className="w-1/2 absolute top-[12rem] right-[-3rem]" width={1000} height={1000} />
             </div>
           </div>
         </section>
