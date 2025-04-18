@@ -7,6 +7,7 @@ import React, { // Import React namespace for types like React.FC, React.ChangeE
     CSSProperties, // Import CSSProperties for inline styles
     JSX
 } from "react";
+// import { useTheme } from "@/shared/context/ThemeContext"; // Removed as it wasn't used
 // Remove PropTypes import, it's no longer needed
 // import PropTypes from "prop-types";
 // import "./Gauge.css"; // Import the CSS file
@@ -122,6 +123,8 @@ const describeArc = (cx: number, cy: number, r: number, startDeg: number, endDeg
 // --- Gauge Component (Typed) ---
 // Use React.FC<GaugeProps> or the function signature style below
 function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Element { // Explicit return type JSX.Element
+    // const { effectiveTheme } = useTheme(); // Removed as it wasn't used directly in this component
+
     console.log('userOptions', userOptions)
     // --- Constants (Internal configuration) ---
     // These could be derived from props if needed, but are fixed here
@@ -148,9 +151,9 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
         normalRangeLabel: "Normal",
         highRangeLabel: "High",
         valuePrecision: 1,
-        lowColor: "#D9534F",
-        normalColor: "#5CB85C",
-        highColor: "#D9534F",
+        lowColor: "#4cb860",
+        normalColor: "#faa419",
+        highColor: "#ff144b",
         labelFontSize: 13,
     };
 
@@ -290,12 +293,12 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
         };
     }, [options.lowThreshold, options.highThreshold, valueToAngle, radius, thresholdLabelRadiusOffset, rangeLabelRadiusOffset, startAngle, endAngle, centerX, centerY]); // Added dependencies
 
-    // Determine status background class (Typed)
+    // Determine status background class (Typed) - Added Dark Mode
     const statusBgClass: string = useMemo(() => {
-        // Use Tailwind classes. Ensure these colors are available.
-        if (status === options.lowRangeLabel) return "bg-red-500"; // Low status - Red
-        if (status === options.highRangeLabel) return "bg-red-500"; // High status - Also Red (typically abnormal)
-        return "bg-green-500"; // Normal status - Green
+        if (status === options.lowRangeLabel || status === options.highRangeLabel) {
+            return "bg-red-100 border border-red-300 text-red-700 dark:bg-red-900/40 dark:border-red-700/60 dark:text-red-200";
+        }
+        return "bg-green-100 border border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-700/60 dark:text-green-200";
     }, [status, options.lowRangeLabel, options.highRangeLabel]); // Dependencies
 
     const valueDisplay: string = isNaN(currentValue)
@@ -305,17 +308,22 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
     // Use CSSProperties for inline styles
     const textStyle: CSSProperties = { fontSize: `${options.labelFontSize}px` };
     const rangeLabelStyle: CSSProperties = { fontSize: `${options.labelFontSize + 2}px` };
+    const needleStyle: CSSProperties = {
+        transform: `rotate(${needleAngle}deg)`,
+        transition: 'transform 0.5s ease-out'
+    };
     const lowArcStyle: CSSProperties = { stroke: options.lowColor };
     const normalArcStyle: CSSProperties = { stroke: options.normalColor };
     const highArcStyle: CSSProperties = { stroke: options.highColor };
     const capStartStyle: CSSProperties = { stroke: options.lowColor };
     const capEndStyle: CSSProperties = { stroke: options.highColor };
-    const needleStyle: CSSProperties = { transform: `rotate(${needleAngle}deg)` };
 
     // --- Render JSX ---
     return (
-        <div className="gauge-meter-container relative border shadow-md rounded-md p-4">
-            <h1 className="text-lg font-semibold text-gray-700 mb-2">
+        // Apply dark mode styles to the main container
+        <div className="gauge-meter-container relative border border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-none rounded-lg p-6 bg-white dark:bg-gray-800">
+            {/* Apply dark mode text color */}
+            <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 text-center">
                 {options.title} {options.unit ? `(${options.unit})` : ""}
             </h1>
 
@@ -334,7 +342,8 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                 aria-valuetext={`${valueDisplay} ${options.unit}, Status: ${status}`}
                 aria-label={`${options.title} Gauge`}
             >
-                <title>{`${options.title}: ${valueDisplay} ${options.unit} (${status})`}</title>
+                {/* Use theme-dependent title */}
+                <title className="fill-current text-gray-900 dark:text-gray-100">{`${options.title}: ${valueDisplay} ${options.unit} (${status})`}</title>
                 {/* Arcs */}
                 <path
                     className="gauge-arc gauge-arc-low"
@@ -376,145 +385,161 @@ function Gauge({ options: userOptions = {}, infoDialog }: GaugeProps): JSX.Eleme
                     strokeLinecap="round"
                 />
 
-                {/* Threshold indicators - small triangles */}
+                {/* Threshold indicators - small triangles with dark mode */}
                 <polygon 
                     points={`${labelPositions.thresholdLowPos.x-8},${labelPositions.thresholdLowPos.y+15} ${labelPositions.thresholdLowPos.x},${labelPositions.thresholdLowPos.y} ${labelPositions.thresholdLowPos.x+8},${labelPositions.thresholdLowPos.y+15}`} 
-                    fill="#64748b" 
-                    opacity="0.6"
+                    className="fill-slate-400 dark:fill-slate-500 opacity-80" // Use Tailwind
                 />
                 <polygon 
                     points={`${labelPositions.thresholdHighPos.x-8},${labelPositions.thresholdHighPos.y+15} ${labelPositions.thresholdHighPos.x},${labelPositions.thresholdHighPos.y} ${labelPositions.thresholdHighPos.x+8},${labelPositions.thresholdHighPos.y+15}`} 
-                    fill="#64748b" 
-                    opacity="0.6"
+                    className="fill-slate-400 dark:fill-slate-500 opacity-80" // Use Tailwind
                 />
 
-                {/* Needle with refined styling */}
+                {/* Needle with refined styling & dark mode */}
                 <g className="gauge-needle-group" style={needleStyle} transform-origin={`${centerX} ${centerY}`}>
-                    {/* Needle shadow */}
+                    {/* Needle shadow - subtle adjustments maybe needed */}
                     <line
                         x1={centerX}
                         y1={centerY + 5}
                         x2={centerX}
                         y2={centerY - radius + (arcStrokeWidth / 2) + 15}
-                        stroke="rgba(0,0,0,0.15)"
                         strokeWidth="3"
                         strokeLinecap="round"
                         transform="translate(1, 1)"
+                        className="stroke-black/10 dark:stroke-black/20" // Adjusted shadow
                     />
-                    {/* Needle */}
+                    {/* Needle */} 
                     <line
-                        className="gauge-needle"
+                        className="gauge-needle text-slate-600 dark:text-slate-300" // Combined classes
                         x1={centerX}
-                        y1={centerY}
+                        y1={centerY + 5}
                         x2={centerX}
-                        y2={centerY - radius + (arcStrokeWidth / 2) + 5} // Adjust length to fit inside arc
-                        stroke="black" // Define needle appearance
-                        strokeWidth="3"
-                    // No inline style needed here as rotation is on the group
+                        y2={centerY - radius + (arcStrokeWidth / 2) + 15}
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        stroke="currentColor" // Inherit text color
                     />
+                    {/* Needle base - Use Tailwind for colors */}
                     <circle
-                        className="gauge-needle-base"
+                        className="gauge-needle-base text-slate-100 stroke-slate-600 dark:text-gray-700 dark:stroke-gray-300" // Combined classes
                         cx={centerX}
                         cy={centerY}
-                        r="10"
-                        fill="black" // Define base appearance
+                        r="12"
+                        strokeWidth="2"
+                        fill="currentColor"
+                        stroke="currentColor"
+                    />
+                    <circle
+                        className="text-slate-400 dark:text-slate-500" // Class for inner circle
+                        cx={centerX}
+                        cy={centerY}
+                        r="6"
+                        fill="currentColor"
                     />
                 </g>
 
                 {/* Labels */}
                 {/* Min/Max Values */}
                 <text
-                    className="gauge-label gauge-label-value"
-                    x={centerX - radius - 5} // Adjust position based on radius
-                    y={centerY + 25} // Adjust vertical position
-                    textAnchor="middle" // Usually better for programmatic placement
+                    className="gauge-label gauge-label-value fill-slate-500 dark:fill-slate-400"
+                    x={centerX - radius - 10}
+                    y={centerY + 35}
+                    textAnchor="middle"
                     style={textStyle}
+                    fontWeight="500"
                 >
                     {options.minValue} {options.unit}
                 </text>
                 <text
-                    className="gauge-label gauge-label-value"
-                    x={centerX + radius + 5} // Adjust position
-                    y={centerY + 25} // Adjust vertical position
+                    className="gauge-label gauge-label-value fill-slate-500 dark:fill-slate-400"
+                    x={centerX + radius + 10}
+                    y={centerY + 35}
                     textAnchor="middle"
                     style={textStyle}
+                    fontWeight="500"
                 >
                     {options.maxValue} {options.unit}
                 </text>
 
                 {/* Threshold Values */}
                 <text
-                    className="gauge-label gauge-label-threshold"
+                    className="gauge-label gauge-label-threshold fill-slate-500 dark:fill-slate-400"
                     x={labelPositions.thresholdLowPos.x}
                     y={labelPositions.thresholdLowPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
+                    fontWeight="500"
                 >
                     {options.lowThreshold} {/* Removed unit for less clutter */}
                 </text>
                 <text
-                    className="gauge-label gauge-label-threshold"
+                    className="gauge-label gauge-label-threshold fill-slate-500 dark:fill-slate-400"
                     x={labelPositions.thresholdHighPos.x}
                     y={labelPositions.thresholdHighPos.y + 35}
                     textAnchor="middle"
                     dy="0.3em"
                     style={textStyle}
+                    fontWeight="500"
                 >
                     {options.highThreshold} {/* Removed unit */}
                 </text>
 
                 {/* Range Labels */}
                 <text
-                    className="gauge-label gauge-label-range"
+                    className="gauge-label gauge-label-range fill-slate-500 dark:fill-slate-400"
                     x={labelPositions.rangeLowPos.x}
                     y={labelPositions.rangeLowPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
+                    fontWeight="600"
                 >
                     {options.lowRangeLabel}
                 </text>
                 <text
-                    className="gauge-label gauge-label-range"
+                    className="gauge-label gauge-label-range fill-slate-500 dark:fill-slate-400"
                     x={labelPositions.rangeNormalPos.x}
-                    y={labelPositions.rangeNormalPos.y - 10}
+                    y={labelPositions.rangeNormalPos.y - 25}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
+                    fontWeight="600"
                 >
                     {options.normalRangeLabel}
                 </text>
                 <text
-                    className="gauge-label gauge-label-range"
+                    className="gauge-label gauge-label-range fill-slate-500 dark:fill-slate-400"
                     x={labelPositions.rangeHighPos.x}
                     y={labelPositions.rangeHighPos.y - 20}
                     textAnchor="middle"
                     dy="0.3em"
                     style={rangeLabelStyle}
+                    fontWeight="600"
                 >
                     {options.highRangeLabel}
                 </text>
 
-                {/* Current Value Label */}
+                {/* Current Value Label with dark mode */}
                 <text
-                    className="gauge-label gauge-label-current"
+                    className="gauge-label gauge-label-current fill-slate-800 dark:fill-slate-100"
                     x={centerX}
-                    y={centerY + radius * 0.4} // Position below center
+                    y={centerY + radius * 0.4 + 10}
                     textAnchor="middle"
-                    fontSize="24" // Make current value prominent
-                    fontWeight="bold"
-                    fill="#333"
+                    fontSize="26"
+                    fontWeight="700"
                 >
                     {valueDisplay} {options.unit}
                 </text>
             </svg>
             {/* DO NOT CHANGE SVG, AND RELATED CODE. INSIDE THIS BLOCK */}
 
-            {/* Status Badge */}
-            <span className={`inline-block px-3 py-1 rounded-full text-white text-xs font-semibold mt-2 ${statusBgClass}`}>
-                {status}
-            </span>
+            {/* Status Badge with dark mode styling applied via statusBgClass */}
+            <div className="flex justify-center mt-4">
+                <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-medium ${statusBgClass} shadow-sm`}>
+                    {status}
+                </span>
+            </div>
 
             {/* Learn More Button */}
             <div className="mt-4 text-center"> {/* Container for centering */}

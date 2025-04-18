@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar"
+import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 // import { getReportsForSidebar } from "@/entities/report/api/queries"
 
 const Logo = () => (
@@ -22,7 +23,7 @@ const Logo = () => (
       <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor" />
       <path d="M12 12C10.9 12 10 11.1 10 10C10 8.9 10.9 8 12 8C13.1 8 14 8.9 14 10C14 11.1 13.1 12 12 12Z" fill="currentColor" />
     </svg>
-    <span className="font-semibold text-lg text-gray-900">Hemolyze</span>
+    <span className="font-semibold text-lg text-gray-900 dark:text-gray-100">Hemolyze</span>
   </div>
 );
 
@@ -56,7 +57,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavSecondary className="mt-auto" /> */}
         </div>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="flex flex-col gap-2 items-stretch">
+          <ThemeToggle />
         <NavUser />
       </SidebarFooter>
     </Sidebar>

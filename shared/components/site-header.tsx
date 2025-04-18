@@ -3,6 +3,7 @@ import { Separator } from "@/shared/components/ui/separator"
 import { SidebarTrigger } from "@/shared/components/ui/sidebar"
 import Link from "next/link"
 import Title from "./site-header-title"
+import ThemeToggle from "@/shared/components/ui/ThemeToggle"
 
 export function SiteHeader() {
   return (
@@ -15,6 +16,7 @@ export function SiteHeader() {
         />
         <Title />
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="ghost" asChild size="sm" className="hidden">
             <Link
               href="https://github.com/hemolyze/hemolyze"
