@@ -87,11 +87,15 @@ export default function Home() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6">See It In Action</h2>
             <p className="text-lg text-gray-300 mb-8">
-              Experience how easy it is to understand your health data. (
+              Experience how easy it is to understand your health data.
             </p>
             <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden shadow-xl flex items-center justify-center">
-              <Activity size={64} className="text-gray-500" />
-              <p className="absolute bottom-4 text-xs text-gray-400">Interactive Demo Area</p>
+              <iframe 
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/dbsN76Sa35E?autoplay=1&mute=1&playsinline=1&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0" 
+                title="Hemolyze Demo" 
+                allow="autoplay; encrypted-media;"
+              />
             </div>
           </div>
         </section>
