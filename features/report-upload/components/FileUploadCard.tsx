@@ -327,85 +327,90 @@ export function FileUploadCard() {
     }, [files]); // files dependency
 
     const dropzoneOptions: DropzoneOptions = { onDrop, accept: { 'application/pdf': ['.pdf'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'], 'image/webp': ['.webp'], }, };
-    const { getRootProps, getInputProps, isDragActive } = useDropzone(dropzoneOptions);
+    const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject } = useDropzone(dropzoneOptions);
 
     // Calculate count based on uploadStates
     const pendingOrErrorFilesCount = files.filter(f => { const status = uploadStates.get(f.name)?.status; return status === 'pending' || status === 'error'; }).length;
 
     return (
-        <Card className="w-full max-w-2xl mx-auto">
-            <Toaster richColors position="bottom-center" /> {/* Add Toaster */}
-            <CardHeader><CardTitle className="text-center">Upload Medical Reports</CardTitle></CardHeader>
-            <CardContent className="space-y-6">
-                {error && (<Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
-                <div {...getRootProps()} className={`flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-gray-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'}`}>
-                    <input {...getInputProps()} />
-                    <UploadCloud className={`w-12 h-12 mb-4 ${isDragActive ? 'text-primary' : 'text-gray-400'}`} />
-                    {isDragActive ? (<p className="text-lg font-semibold text-primary">Drop files here...</p>) :
-                        (<> <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Drag & drop files, or click</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">PDF(Max 10MB), IMG(Max 5MB)</p> </>)}
-                </div>
-
-                {files.length > 0 && (
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Selected Files:</h3>
-                        <ScrollArea className="h-48 w-full rounded-md border p-4">
-                            <ul className="space-y-3">
-                                {files.map((file, index) => {
-                                    const state = uploadStates.get(file.name); // Get state from map
-                                    return (
-                                        <li key={`${file.name}-${index}`} className="flex items-center justify-between space-x-3"> {/* Simplified key */}
-                                            {/* File Info Div */}
-                                            <div className="flex items-center space-x-2 min-w-0">
-                                                <FileIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                                                <span className="text-sm font-medium truncate flex-1" title={file.name}>{file.name}</span>
-                                                {/* Use check for size display */}
-                                                <span className="text-xs text-gray-400 flex-shrink-0">
-                                                    {typeof file.size === 'number' ? `(${(file.size / 1024 / 1024).toFixed(2)} MB)` : '(Size unavailable)'}
-                                                </span>
-                                            </div>
-                                            {/* Status/Actions Div */}
-                                            <div className="flex items-center space-x-2 flex-shrink-0">
-                                                {state?.status === 'uploading' && (<Progress value={state.progress} className="w-24 h-2" />)}
-                                                {state?.status === 'success' && (<span className="text-xs text-green-600 font-medium">Uploaded</span>)}
-                                                {state?.status === 'error' && (
-                                                    <span className="text-xs text-red-600 font-medium" title={state.errorMessage ?? 'Upload Error'}>Error</span> // Added fallback title
-                                                )}
-                                                {/* Removed redundant error message display span */}
-                                                {/* Remove Button */}
-                                                {(state?.status === 'pending' || state?.status === 'error' || state?.status === 'success') && (
-                                                    <Button variant="ghost" size="icon" className="w-6 h-6"
-                                                        onClick={() => removeFile(file.name)} aria-label={`Remove ${file.name}`} disabled={isProcessing}>
-                                                        <X className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                                {/* Cancel Button */}
-                                                {state?.status === 'uploading' && state.source && (
-                                                    <Button variant="ghost" size="icon" className="w-6 h-6"
-                                                        onClick={() => state.source?.abort()}
-                                                        aria-label={`Cancel upload for ${file.name}`}
-                                                        disabled={!isProcessing}
-                                                    >
-                                                        <X className="w-4 h-4 text-red-500" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </ScrollArea>
-                        {/* Bottom Buttons */}
-                        <div className="flex justify-end space-x-3">
-                            <Button variant="outline" onClick={() => { setFiles([]); setUploadStates(new Map()); }} disabled={isProcessing}>Clear All</Button>
-                            <Button onClick={handleUpload} disabled={pendingOrErrorFilesCount === 0 || isProcessing}>
-                                {isProcessing ? 'Processing...' : `Upload ${pendingOrErrorFilesCount} File(s)`}
-                            </Button>
-                        </div>
+        <>
+            {/* Put Toaster at the top level or in layout if used globally */}
+            <Toaster richColors position="top-center" />
+            <Card className="w-full max-w-lg">
+                <CardHeader>
+                    <CardTitle className="text-center">Upload Medical Reports</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {error && (<Alert variant="destructive"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>)}
+                    <div {...getRootProps()} className={`flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-gray-400 bg-white dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'}`}>
+                        <input {...getInputProps()} />
+                        <UploadCloud className={`w-12 h-12 mb-4 ${isDragActive ? 'text-primary' : 'text-gray-400'}`} />
+                        {isDragActive ? (<p className="text-lg font-semibold text-primary">Drop files here...</p>) :
+                            (<> <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Drag & drop files, or click</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">PDF(Max 10MB), IMG(Max 5MB)</p> </>)}
                     </div>
-                )}
-            </CardContent>
-        </Card>
+
+                    {files.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-medium">Selected Files:</h3>
+                            <ScrollArea className="h-48 w-full rounded-md border p-4">
+                                <ul className="space-y-3">
+                                    {files.map((file, index) => {
+                                        const state = uploadStates.get(file.name); // Get state from map
+                                        return (
+                                            <li key={`${file.name}-${index}`} className="flex items-center justify-between space-x-3"> {/* Simplified key */}
+                                                {/* File Info Div */}
+                                                <div className="flex items-center space-x-2 min-w-0">
+                                                    <FileIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                                                    <span className="text-sm font-medium truncate flex-1" title={file.name}>{file.name}</span>
+                                                    {/* Use check for size display */}
+                                                    <span className="text-xs text-gray-400 flex-shrink-0">
+                                                        {typeof file.size === 'number' ? `(${(file.size / 1024 / 1024).toFixed(2)} MB)` : '(Size unavailable)'}
+                                                    </span>
+                                                </div>
+                                                {/* Status/Actions Div */}
+                                                <div className="flex items-center space-x-2 flex-shrink-0">
+                                                    {state?.status === 'uploading' && (<Progress value={state.progress} className="w-24 h-2" />)}
+                                                    {state?.status === 'success' && (<span className="text-xs text-green-600 font-medium">Uploaded</span>)}
+                                                    {state?.status === 'error' && (
+                                                        <span className="text-xs text-red-600 font-medium" title={state.errorMessage ?? 'Upload Error'}>Error</span> // Added fallback title
+                                                    )}
+                                                    {/* Removed redundant error message display span */}
+                                                    {/* Remove Button */}
+                                                    {(state?.status === 'pending' || state?.status === 'error' || state?.status === 'success') && (
+                                                        <Button variant="ghost" size="icon" className="w-6 h-6"
+                                                            onClick={() => removeFile(file.name)} aria-label={`Remove ${file.name}`} disabled={isProcessing}>
+                                                            <X className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
+                                                    {/* Cancel Button */}
+                                                    {state?.status === 'uploading' && state.source && (
+                                                        <Button variant="ghost" size="icon" className="w-6 h-6"
+                                                            onClick={() => state.source?.abort()}
+                                                            aria-label={`Cancel upload for ${file.name}`}
+                                                            disabled={!isProcessing}
+                                                        >
+                                                            <X className="w-4 h-4 text-red-500" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </ScrollArea>
+                            {/* Bottom Buttons */}
+                            <div className="flex justify-end space-x-3">
+                                <Button variant="outline" onClick={() => { setFiles([]); setUploadStates(new Map()); }} disabled={isProcessing}>Clear All</Button>
+                                <Button onClick={handleUpload} disabled={pendingOrErrorFilesCount === 0 || isProcessing}>
+                                    {isProcessing ? 'Processing...' : `Upload ${pendingOrErrorFilesCount} File(s)`}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </>
     );
 }
 

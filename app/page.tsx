@@ -7,18 +7,18 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col min-h-screen w-full">
       <Header />
       {/* Hero Section */}
-      <main className="flex flex-col items-center bg-background text-gray-900 w-full">
+      <main className="flex-grow flex flex-col items-center bg-background text-gray-900 w-full">
         <section className="w-full flex flex-col items-center justify-center px-4 md:px-8 lg:px-12 py-16 md:py-24">
           <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div className="flex flex-col gap-6 items-start">
               <h1 className="text-4xl md:text-5xl lg:text-6xl tracking-tight font-display font-semibold leading-tight dark:text-gray-100">
-                Visualize your <br /> blood work. <br /> <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text">effortlessly.</span>
+                Finally Understand <br /> Your Blood Work. <br /> <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-transparent bg-clip-text">Instantly.</span>
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-md tracking-tight">
-                Transform <span className="font-bold">any</span> complex medical reports into clear, visual insights and track your health trends over time.
+                Stop guessing what your lab results mean. Upload <span className="font-bold">any</span> report, see clear visuals, and track your health journey.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <Link href="/new">
@@ -33,18 +33,15 @@ export default function Home() {
                 </Link>
               </div>
               <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                <ShieldCheck size={14} /> End-to-end encrypted & HIPAA compliant options available.
+                <ShieldCheck size={14} /> Encrypted & HIPAA options available.
               </p>
             </div>
 
             {/* Right Column - Image Placeholder */}
             {/* <div className="relative flex items-center justify-center aspect-square bg-white rounded-lg overflow-hidden border">
             </div> */}
-            <div className="relative flex justify-center items-center flex-col gap-4 md:min-w-1/2 h-[50vh] md:h-auto overflow-hidden md:overflow-visible">
-              <Image src="/images/1.webp" alt="Gauges" className="w-1/2 top-0 left-0" width={1000} height={1000} />
-              <Image src="/images/2.webp" alt="Gauges" className="w-1/2 absolute top-[4rem] left-[-7rem]" width={1000} height={1000} />
-              <Image src="/images/3.webp" alt="Gauges" className="w-1/2 absolute top-[20rem] left[0rem]" width={1000} height={1000} />
-              <Image src="/images/4.webp" alt="Gauges" className="w-1/2 absolute top-[12rem] right-[-3rem]" width={1000} height={1000} />
+            <div className="relative flex justify-center items-center flex-col gap-4 md:min-w-1/2 h-[30rem] overflow-hidden md:overflow-visible">
+              <Image src="/images/1.webp" alt="Gauges" className="object-contain w-full h-full" width={1000} height={1000} />
             </div>
           </div>
         </section>
@@ -52,7 +49,7 @@ export default function Home() {
         {/* Problem Statement Section */}
         <section className="w-full bg-gray-50 dark:bg-gray-900 py-16 md:py-24 px-4 md:px-8 lg:px-12 text-center">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4 dark:text-gray-100">Tired of Confusing Medical Jargon?</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4 dark:text-gray-100">Lab Reports Got You Confused?</h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
               Traditional lab reports are dense, difficult to understand, and make it hard to see your health trends. You deserve clarity.
             </p>
@@ -70,14 +67,13 @@ export default function Home() {
               <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1 pl-4">
                 <li>Clear, interactive charts and graphs.</li>
                 <li>Historical trend tracking.</li>
+                <li>AI-powered chat for quick explanations.</li>
                 <li>Explanation of common biomarkers.</li>
                 <li>Secure and private data handling.</li>
               </ul>
             </div>
-            <div className="relative flex items-center justify-center aspect-video bg-gray-100 rounded-lg overflow-hidden shadow-md">
-              <Eye size={48} className="text-gray-400" />
-              <p className="absolute bottom-4 text-xs text-gray-500">Visualization Placeholder</p>
-              {/* Placeholder for screenshot/graphic */}
+            <div className="relative w-72 mx-auto">
+              <Image src="/images/2.webp" alt="Gauges" className="shadow-md rounded-md object-contain relative w-full h-auto" width={500} height={500} />
             </div>
           </div>
         </section>
@@ -85,7 +81,7 @@ export default function Home() {
         {/* Interactive Demo Preview Section */}
         <section className="w-full bg-gray-900 text-white py-16 md:py-24 px-4 md:px-8 lg:px-12 text-center">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6">See It In Action</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6">Explore the Clarity</h2>
             <p className="text-lg text-gray-300 mb-8">
               Experience how easy it is to understand your health data.
             </p>
@@ -126,7 +122,7 @@ export default function Home() {
         {/* CTA Section */}
         <section className="w-full bg-blue-600 text-white py-16 md:py-20 px-4 md:px-8 lg:px-12">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6">Ready to Understand Your Health Better?</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6">Ready for Clearer Health Insights?</h2>
             <p className="text-lg text-blue-100 mb-8">
               Upload your first report securely and see the difference clarity makes.
             </p>
@@ -178,21 +174,20 @@ export default function Home() {
             <strong>Disclaimer:</strong> Hemolyze provides informational insights based on your uploaded data. It is not intended as a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
           </div>
         </section>
-
-        {/* Main Footer */}
-        <footer className="w-full bg-gray-900 text-gray-400 py-8 px-4 md:px-8 lg:px-12">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center text-xs">
-            <p>&copy; {new Date().getFullYear()} Hemolyze. All rights reserved.</p>
-            <div className="flex gap-4 mt-4 sm:mt-0">
-              <Link href="https://github.com/hemolyze/hemolyze" className="hover:text-white">Github</Link>
-              <Link href="/terms" className="hover:text-white">Terms</Link>
-              <Link href="/privacy" className="hover:text-white">Privacy</Link>
-              <Link href="/hipaa" className="hover:text-white">HIPAA</Link>
-            </div>
-          </div>
-        </footer>
-
       </main>
+
+      {/* Replicated Footer */}
+      <footer className="w-full bg-gray-900 text-gray-400 py-8 px-4 md:px-8 lg:px-12">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center text-xs">
+          <p>&copy; {new Date().getFullYear()} Hemolyze. All rights reserved.</p>
+          <div className="flex gap-4 mt-4 sm:mt-0">
+            <Link href="https://github.com/hemolyze/hemolyze" className="hover:text-white">Github</Link>
+            <Link href="/terms" className="hover:text-white">Terms</Link>
+            <Link href="/privacy" className="hover:text-white">Privacy</Link>
+            <Link href="/hipaa" className="hover:text-white">HIPAA</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
