@@ -2,7 +2,7 @@ import { Header } from "@/shared/components/layout/Header";
 import { Button } from "@/shared/components/ui/button"; // Assuming Button component exists
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion"; // Assuming Accordion exists
 import Link from "next/link";
-import { ShieldCheck, BarChart3, Eye, Activity, UserCheck, Info } from 'lucide-react'; // Example icons
+import { ShieldCheck, BarChart3, Eye, UserCheck, Info } from 'lucide-react'; // Example icons
 import Image from "next/image";
 
 export default function Home() {
